@@ -10,6 +10,8 @@ import (
 	"time"
 	"wongnok/internal/platform/database"
 	"wongnok/internal/user"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -27,15 +29,21 @@ func main() {
 	userService := user.NewService(userRepo)
 	userHandler := user.NewHandler(userService)
 
+	// Router
+	router := gin.Default()
+
 	// Register path
 	// curl -X GET http://localhost:8080/users/{id}
-	http.HandleFunc("GET /users/{id}", userHandler.GetUser)
+	router.GET("/users/:id", userHandler.GetUser)
 
 	// curl -X POST http://localhost:8080/users -H "Content-Type: application/json" -d '{"email":"taro@devpool.pea"}'
-	http.HandleFunc("POST /users", userHandler.CreateUser)
+	router.POST("/users", userHandler.CreateUser)
 
 	// Server
-	serv := &http.Server{Addr: ":8080"}
+	serv := &http.Server{
+		Addr:    ":8080",
+		Handler: router,
+	}
 
 	go serv.ListenAndServe()
 	log.Println("server started at :8080")

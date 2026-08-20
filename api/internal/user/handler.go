@@ -2,10 +2,11 @@ package user
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"wongnok/internal/httputil"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Service interface {
@@ -23,43 +24,41 @@ func NewHandler(service Service) *handler {
 	}
 }
 
-func (hdr *handler) GetUser(writer http.ResponseWriter, request *http.Request) {
-	uid := request.PathValue("id")
+func (hdr *handler) GetUser(ctx *gin.Context) {
+	uid := ctx.Param("id")
 
-	user, err := hdr.service.FindByID(request.Context(), uid)
+	user, err := hdr.service.FindByID(ctx, uid)
 	if err != nil {
-		writer.Header().Set("Content-Type", "application/json")
-
 		switch {
 		case errors.Is(err, ErrUserNotFound):
-			httputil.WriteError(writer, http.StatusNotFound, httputil.ErrorResponse{Message: err.Error()})
+			ctx.JSON(http.StatusNotFound, httputil.ErrorResponse{Message: err.Error()})
 
 		case errors.Is(err, ErrInvalidInput):
-			httputil.WriteError(writer, http.StatusBadRequest, httputil.ErrorResponse{Message: err.Error()})
+			ctx.JSON(http.StatusBadRequest, httputil.ErrorResponse{Message: err.Error()})
 
 		default:
-			httputil.WriteError(writer, http.StatusInternalServerError, httputil.ErrorResponse{Message: err.Error()})
+			ctx.JSON(http.StatusInternalServerError, httputil.ErrorResponse{Message: err.Error()})
 
 		}
 
 		return
 	}
 
-	httputil.WriteJSON(writer, http.StatusOK, NewUserResponse(*user))
+	ctx.JSON(http.StatusOK, NewUserResponse(*user))
 }
 
-func (hdr *handler) CreateUser(writer http.ResponseWriter, request *http.Request) {
+func (hdr *handler) CreateUser(ctx *gin.Context) {
 	var req CreateUserRequest
-	if err := json.NewDecoder(request.Body).Decode(&req); err != nil {
-		httputil.WriteError(writer, http.StatusBadRequest, httputil.ErrorResponse{Message: "invalid request body"})
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, httputil.ErrorResponse{Message: "invalid request body"})
 		return
 	}
 
-	user, err := hdr.service.Create(request.Context(), req.ToUser())
+	user, err := hdr.service.Create(ctx, req.ToUser())
 	if err != nil {
-		httputil.WriteError(writer, http.StatusBadRequest, httputil.ErrorResponse{Message: err.Error()})
+		ctx.JSON(http.StatusBadRequest, httputil.ErrorResponse{Message: err.Error()})
 		return
 	}
 
-	httputil.WriteJSON(writer, http.StatusCreated, NewUserResponse(*user))
+	ctx.JSON(http.StatusCreated, NewUserResponse(*user))
 }
