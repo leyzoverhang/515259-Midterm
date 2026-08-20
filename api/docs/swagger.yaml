@@ -3,17 +3,24 @@ definitions:
   internal_user.CreateUserRequest:
     properties:
       email:
+        example: somchai@pea.co.th
         type: string
       name:
+        example: สมชาย ใจดี
         type: string
+    required:
+    - email
     type: object
   internal_user.UserResponse:
     properties:
       email:
+        example: somchai@pea.co.th
         type: string
       id:
+        example: eb238dfe-9d49-4345-9cc9-350c50b429e6
         type: string
       name:
+        example: สมชาย ใจดี
         type: string
     type: object
   wongnok_internal_httputil.ErrorResponse:

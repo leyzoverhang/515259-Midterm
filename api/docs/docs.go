@@ -110,12 +110,17 @@ const docTemplate = `{
     "definitions": {
         "internal_user.CreateUserRequest": {
             "type": "object",
+            "required": [
+                "email"
+            ],
             "properties": {
                 "email": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "somchai@pea.co.th"
                 },
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "สมชาย ใจดี"
                 }
             }
         },
@@ -123,13 +128,16 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "email": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "somchai@pea.co.th"
                 },
                 "id": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "eb238dfe-9d49-4345-9cc9-350c50b429e6"
                 },
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "สมชาย ใจดี"
                 }
             }
         },
