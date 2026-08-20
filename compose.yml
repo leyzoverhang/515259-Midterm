@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: wongnok-postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: Pe@devp00l
+    ports:
+      - "5432:5432"
+    volumes:
+      - wongnok-pgdata:/var/lib/postgresql/data
+
+volumes:
+  wongnok-pgdata:
