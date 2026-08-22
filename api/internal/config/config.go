@@ -15,6 +15,7 @@ type Config struct {
 	App      App
 	Database Database
 	Logging  Logging
+	Keycloak Keycloak
 }
 
 func Load() (Config, error) {
@@ -31,5 +32,10 @@ func Load() (Config, error) {
 }
 
 func (cfg Config) Validate() error {
-	return errors.Join(cfg.App.Validate(), cfg.Database.Validate(), cfg.Logging.Validate())
+	return errors.Join(
+		cfg.App.Validate(),
+		cfg.Database.Validate(),
+		cfg.Logging.Validate(),
+		cfg.Keycloak.Validate(),
+	)
 }
