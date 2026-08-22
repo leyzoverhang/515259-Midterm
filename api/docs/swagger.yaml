@@ -27,6 +27,53 @@ definitions:
     required:
     - refreshToken
     type: object
+  internal_recipe.CreateRecipeRequest:
+    properties:
+      description:
+        type: string
+      difficultyId:
+        type: string
+      durationId:
+        type: string
+      imageUrl:
+        type: string
+      ingredients:
+        items:
+          $ref: '#/definitions/internal_recipe.RecipeIngredientRequest'
+        type: array
+      instructions:
+        items:
+          $ref: '#/definitions/internal_recipe.RecipeInstructionRequest'
+        type: array
+      name:
+        type: string
+    required:
+    - description
+    - difficultyId
+    - durationId
+    - ingredients
+    - instructions
+    - name
+    type: object
+  internal_recipe.CreateRecipeResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+  internal_recipe.RecipeIngredientRequest:
+    properties:
+      description:
+        type: string
+    required:
+    - description
+    type: object
+  internal_recipe.RecipeInstructionRequest:
+    properties:
+      description:
+        type: string
+    required:
+    - description
+    type: object
   internal_user.UserResponse:
     properties:
       email:
@@ -160,6 +207,42 @@ paths:
       summary: ออกจากระบบ
       tags:
       - auth
+  /recipes:
+    post:
+      consumes:
+      - application/json
+      description: สร้างสูตรอาหารจากข้อมูลที่ระบุ โดยผู้ใช้ที่ยืนยันตัวตนแล้วจะเป็นผู้สร้างสูตร
+      parameters:
+      - description: Recipe data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_recipe.CreateRecipeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_recipe.CreateRecipeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: สร้างสูตรอาหาร
+      tags:
+      - recipes
   /users/{id}:
     get:
       description: ค้นหาข้อมูล User จาก UUID แล้วคืนข้อมูล User ที่เจอกลับมา
