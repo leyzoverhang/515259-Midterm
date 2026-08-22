@@ -24,12 +24,17 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-// @title			Wongnok API
-// @version		1.0
-// @description	API สำหรับจัดการกับระบบสูตรอาหาร
-// @host			localhost:8080
-// @BasePath		/api/v1
-// @schemas		http https
+//	@title			Wongnok API
+//	@version		1.0
+//	@description	API สำหรับจัดการกับระบบสูตรอาหาร
+//	@host			localhost:8080
+//	@BasePath		/api/v1
+//	@schemas		http https
+
+// @securityDefinitions.apikey	BearerAuth
+// @in							header
+// @name						Authorization
+// @description				พิมพ์ "Bearer" ตามด้วย space แล้วตามด้วย JWT token เช่น "Bearer eyJhbGci..."
 func main() {
 	if err := run(); err != nil {
 		slog.Error("service stopped", "error", err)

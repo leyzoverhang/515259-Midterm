@@ -17,6 +17,11 @@ const docTemplate = `{
     "paths": {
         "/users": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "สร้าง user โดยรับข้อมูลมาจาก Client และ generate uuid ให้ พร้อมส่งรายละเอียดของ user ที่ถูกสร้างกลับไป",
                 "produces": [
                     "application/json"
@@ -60,6 +65,11 @@ const docTemplate = `{
         },
         "/users/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "ค้นหาข้อมูล User จาก UUID แล้วคืนข้อมูล User ที่เจอกลับมา",
                 "produces": [
                     "application/json"
@@ -151,6 +161,14 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "พิมพ์ \"Bearer\" ตามด้วย space แล้วตามด้วย JWT token เช่น \"Bearer eyJhbGci...\"",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`

@@ -29,6 +29,7 @@ func NewHandler(service Service) *handler {
 //	@Summary		ดีงข้อมูลจาก user แบบรายคน
 //	@Description	ค้นหาข้อมูล User จาก UUID แล้วคืนข้อมูล User ที่เจอกลับมา
 //	@Tags			users
+//	@Security		BearerAuth
 //	@Produce		json
 //	@Param			id	path		string	true	"User ID (UUID)"	format(uuid)
 //	@Success		200	{object}	user.UserResponse
@@ -64,6 +65,7 @@ func (hdr *handler) GetUser(ctx *gin.Context) {
 //	@Summary		สร้าง user
 //	@Description	สร้าง user โดยรับข้อมูลมาจาก Client และ generate uuid ให้ พร้อมส่งรายละเอียดของ user ที่ถูกสร้างกลับไป
 //	@Tags			users
+//	@Security		BearerAuth
 //	@Produce		json
 //	@Param			payload	body		user.CreateUserRequest	true	"รายละเอียดสำหรับสร้าง User"
 //	@Success		201		{object}	user.UserResponse

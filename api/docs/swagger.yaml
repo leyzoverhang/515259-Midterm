@@ -63,6 +63,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: สร้าง user
       tags:
       - users
@@ -95,7 +97,15 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: ดีงข้อมูลจาก user แบบรายคน
       tags:
       - users
+securityDefinitions:
+  BearerAuth:
+    description: พิมพ์ "Bearer" ตามด้วย space แล้วตามด้วย JWT token เช่น "Bearer eyJhbGci..."
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"
