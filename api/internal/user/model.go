@@ -8,14 +8,21 @@ import (
 )
 
 type User struct {
-	ID        uuid.UUID `gorm:"primaryKey;default:gen_random_uuid()"`
-	Email     string
-	Name      *string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt
+	ID                uuid.UUID `gorm:"primaryKey;default:gen_random_uuid()"`
+	Email             string
+	Name              *string
+	Bio               *string
+	UID               string
+	PreferredUsername *string
+	LastSignedInAt    *time.Time
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
+	DeletedAt         gorm.DeletedAt
 }
 
-func (User) TableName() string {
-	return "demo_users"
+type KeycloakUser struct {
+	UID               string
+	Email             string
+	Name              string
+	PreferredUsername string
 }

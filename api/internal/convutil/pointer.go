@@ -9,3 +9,13 @@ func ToSafeValue[T any](ptr *T) T {
 
 	return *ptr
 }
+
+func ToPointer[T comparable](value T) *T {
+	var zero T
+
+	if value == zero {
+		return nil
+	}
+
+	return &value
+}

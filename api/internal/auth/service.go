@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 	"wongnok/internal/config"
+	"wongnok/internal/user"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
@@ -23,14 +24,20 @@ type Repository interface {
 	ConsumeTicket(ctx context.Context, ticket string) (Credential, error)
 }
 
-type service struct {
-	repository Repository
-	keycloak   config.Keycloak
-	oauth2     *oauth2.Config
-	http       *http.Client
+type UserService interface {
+	UpsertFromKeycloak(ctx context.Context, kuser user.KeycloakUser) error
 }
 
-func NewService(repo Repository, keycloak config.Keycloak, provider *oidc.Provider) *service {
+type service struct {
+	repository  Repository
+	userService UserService
+	keycloak    config.Keycloak
+	oauth2      *oauth2.Config
+	verifier    *oidc.IDTokenVerifier
+	http        *http.Client
+}
+
+func NewService(repo Repository, userService UserService, keycloak config.Keycloak, provider *oidc.Provider, verifier *oidc.IDTokenVerifier) *service {
 	oauthConf := &oauth2.Config{
 		ClientID:     keycloak.ClientID,
 		ClientSecret: keycloak.ClientSecret,
@@ -40,10 +47,12 @@ func NewService(repo Repository, keycloak config.Keycloak, provider *oidc.Provid
 	}
 
 	return &service{
-		repository: repo,
-		keycloak:   keycloak,
-		oauth2:     oauthConf,
-		http:       &http.Client{Timeout: (10 * time.Second)},
+		repository:  repo,
+		userService: userService,
+		keycloak:    keycloak,
+		oauth2:      oauthConf,
+		verifier:    verifier,
+		http:        &http.Client{Timeout: (10 * time.Second)},
 	}
 }
 
@@ -67,9 +76,18 @@ func (svc *service) HandleCallback(ctx context.Context, code, state string) (str
 		}
 	}
 
-	credential, err := svc.exchangeCode(ctx, code)
+	credential, claims, err := svc.exchangeCode(ctx, code)
 	if err != nil {
 		return "", fmt.Errorf("exchange code: %w", err)
+	}
+
+	if err := svc.userService.UpsertFromKeycloak(ctx, user.KeycloakUser{
+		UID:               claims.Subject,
+		Email:             claims.Email,
+		Name:              claims.Name,
+		PreferredUsername: claims.PreferredUsername,
+	}); err != nil {
+		return "", fmt.Errorf("upsert user: %w", err)
 	}
 
 	ticket, err := generateRandomToken()
@@ -134,10 +152,25 @@ func generateRandomToken() (string, error) {
 	return base64.RawURLEncoding.EncodeToString(buffer), nil
 }
 
-func (svc *service) exchangeCode(ctx context.Context, code string) (Credential, error) {
+func (svc *service) exchangeCode(ctx context.Context, code string) (Credential, KeycloakClaims, error) {
 	token, err := svc.oauth2.Exchange(ctx, code)
 	if err != nil {
-		return Credential{}, fmt.Errorf("%w: %v", ErrExchangeFailed, err)
+		return Credential{}, KeycloakClaims{}, fmt.Errorf("%w: %v", ErrExchangeFailed, err)
+	}
+
+	rawIDToken, ok := token.Extra("id_token").(string)
+	if !ok {
+		return Credential{}, KeycloakClaims{}, fmt.Errorf("missing id_token")
+	}
+
+	idToken, err := svc.verifier.Verify(ctx, rawIDToken)
+	if err != nil {
+		return Credential{}, KeycloakClaims{}, fmt.Errorf("verify id_token: %w", err)
+	}
+
+	var claims KeycloakClaims
+	if err := idToken.Claims(&claims); err != nil {
+		return Credential{}, KeycloakClaims{}, fmt.Errorf("parse claims: %w", err)
 	}
 
 	return Credential{
@@ -145,5 +178,5 @@ func (svc *service) exchangeCode(ctx context.Context, code string) (Credential, 
 		RefreshToken: token.RefreshToken,
 		TokenType:    token.TokenType,
 		ExpiresAt:    token.Expiry,
-	}, nil
+	}, claims, nil
 }

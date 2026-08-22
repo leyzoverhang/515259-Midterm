@@ -180,54 +180,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/users": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "สร้าง user โดยรับข้อมูลมาจาก Client และ generate uuid ให้ พร้อมส่งรายละเอียดของ user ที่ถูกสร้างกลับไป",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "สร้าง user",
-                "parameters": [
-                    {
-                        "description": "รายละเอียดสำหรับสร้าง User",
-                        "name": "payload",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/internal_user.CreateUserRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/internal_user.UserResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/users/{id}": {
             "get": {
                 "security": [
@@ -242,11 +194,10 @@ const docTemplate = `{
                 "tags": [
                     "users"
                 ],
-                "summary": "ดีงข้อมูลจาก user แบบรายคน",
+                "summary": "ดึงข้อมูลจาก user แบบรายคน",
                 "parameters": [
                     {
                         "type": "string",
-                        "format": "uuid",
                         "description": "User ID (UUID)",
                         "name": "id",
                         "in": "path",
@@ -321,22 +272,6 @@ const docTemplate = `{
                 "refreshToken": {
                     "type": "string",
                     "example": "eyJhbGci..."
-                }
-            }
-        },
-        "internal_user.CreateUserRequest": {
-            "type": "object",
-            "required": [
-                "email"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "example": "somchai@pea.co.th"
-                },
-                "name": {
-                    "type": "string",
-                    "example": "สมชาย ใจดี"
                 }
             }
         },

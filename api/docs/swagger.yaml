@@ -27,17 +27,6 @@ definitions:
     required:
     - refreshToken
     type: object
-  internal_user.CreateUserRequest:
-    properties:
-      email:
-        example: somchai@pea.co.th
-        type: string
-      name:
-        example: สมชาย ใจดี
-        type: string
-    required:
-    - email
-    type: object
   internal_user.UserResponse:
     properties:
       email:
@@ -171,43 +160,11 @@ paths:
       summary: ออกจากระบบ
       tags:
       - auth
-  /users:
-    post:
-      description: สร้าง user โดยรับข้อมูลมาจาก Client และ generate uuid ให้ พร้อมส่งรายละเอียดของ
-        user ที่ถูกสร้างกลับไป
-      parameters:
-      - description: รายละเอียดสำหรับสร้าง User
-        in: body
-        name: payload
-        required: true
-        schema:
-          $ref: '#/definitions/internal_user.CreateUserRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/internal_user.UserResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: สร้าง user
-      tags:
-      - users
   /users/{id}:
     get:
       description: ค้นหาข้อมูล User จาก UUID แล้วคืนข้อมูล User ที่เจอกลับมา
       parameters:
       - description: User ID (UUID)
-        format: uuid
         in: path
         name: id
         required: true
@@ -233,7 +190,7 @@ paths:
             $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: ดีงข้อมูลจาก user แบบรายคน
+      summary: ดึงข้อมูลจาก user แบบรายคน
       tags:
       - users
 securityDefinitions:

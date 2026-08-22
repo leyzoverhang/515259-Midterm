@@ -5,13 +5,14 @@ import (
 	"errors"
 	"net/http"
 	"wongnok/internal/httputil"
+	"wongnok/internal/reqctx"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type Service interface {
-	FindByID(ctx context.Context, id string) (*User, error)
-	Create(ctx context.Context, user User) (*User, error)
+	FindByID(ctx context.Context, uid uuid.UUID) (*User, error)
 }
 
 type handler struct {
@@ -26,19 +27,29 @@ func NewHandler(service Service) *handler {
 
 // GetUser godoc
 //
-//	@Summary		ดีงข้อมูลจาก user แบบรายคน
+//	@Summary		ดึงข้อมูลจาก user แบบรายคน
 //	@Description	ค้นหาข้อมูล User จาก UUID แล้วคืนข้อมูล User ที่เจอกลับมา
 //	@Tags			users
 //	@Security		BearerAuth
 //	@Produce		json
-//	@Param			id	path		string	true	"User ID (UUID)"	format(uuid)
+//	@Param			id	path		string	true	"User ID (UUID)"
 //	@Success		200	{object}	user.UserResponse
 //	@Failure		400	{object}	httputil.ErrorResponse
 //	@Failure		404	{object}	httputil.ErrorResponse
 //	@Failure		500	{object}	httputil.ErrorResponse
 //	@Router			/users/{id} [get]
 func (hdr *handler) GetUser(ctx *gin.Context) {
-	uid := ctx.Param("id")
+	id := ctx.Param("id")
+	if id != "me" {
+		ctx.AbortWithStatusJSON(http.StatusNotFound, httputil.ErrorResponse{Message: "not found"})
+		return
+	}
+
+	uid, ok := reqctx.UserID(ctx.Request.Context())
+	if !ok {
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, httputil.ErrorResponse{Message: "user not found"})
+		return
+	}
 
 	user, err := hdr.service.FindByID(ctx, uid)
 	if err != nil {
@@ -58,32 +69,4 @@ func (hdr *handler) GetUser(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, NewUserResponse(*user))
-}
-
-// CreateUser godoc
-//
-//	@Summary		สร้าง user
-//	@Description	สร้าง user โดยรับข้อมูลมาจาก Client และ generate uuid ให้ พร้อมส่งรายละเอียดของ user ที่ถูกสร้างกลับไป
-//	@Tags			users
-//	@Security		BearerAuth
-//	@Produce		json
-//	@Param			payload	body		user.CreateUserRequest	true	"รายละเอียดสำหรับสร้าง User"
-//	@Success		201		{object}	user.UserResponse
-//	@Failure		400		{object}	httputil.ErrorResponse
-//	@Failure		500		{object}	httputil.ErrorResponse
-//	@Router			/users [post]
-func (hdr *handler) CreateUser(ctx *gin.Context) {
-	var req CreateUserRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, httputil.ErrorResponse{Message: "invalid request body"})
-		return
-	}
-
-	user, err := hdr.service.Create(ctx, req.ToUser())
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, httputil.ErrorResponse{Message: err.Error()})
-		return
-	}
-
-	ctx.JSON(http.StatusCreated, NewUserResponse(*user))
 }
