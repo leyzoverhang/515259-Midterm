@@ -42,7 +42,7 @@ func run() error {
 	// Load configuration
 	cfg, err := config.Load()
 	if err != nil {
-		return fmt.Errorf("load configuration:\n%s", err)
+		return fmt.Errorf("load configuration:\n%s", config.Humanize(err))
 	}
 
 	// Setup logger

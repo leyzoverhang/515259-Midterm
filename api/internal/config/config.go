@@ -1,11 +1,15 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/caarlos0/env/v11"
+	"github.com/go-playground/validator/v10"
 	_ "github.com/joho/godotenv/autoload"
 )
+
+var validate = validator.New(validator.WithRequiredStructEnabled())
 
 type Config struct {
 	App      App
@@ -19,5 +23,13 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("parse environment: %w", err)
 	}
 
+	if err := cfg.Validate(); err != nil {
+		return Config{}, err
+	}
+
 	return cfg, nil
+}
+
+func (cfg Config) Validate() error {
+	return errors.Join(cfg.App.Validate(), cfg.Database.Validate(), cfg.Logging.Validate())
 }
