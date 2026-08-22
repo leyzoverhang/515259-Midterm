@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"wongnok/internal/httputil"
 
@@ -10,6 +11,7 @@ import (
 
 type Service interface {
 	BuildLoginURL(ctx context.Context) (string, error)
+	HandleCallback(ctx context.Context, code, state string) (string, error)
 }
 
 type handler struct {
@@ -38,4 +40,27 @@ func (hdr *handler) Login(ctx *gin.Context) {
 	}
 
 	ctx.Redirect(http.StatusFound, authURL)
+}
+
+func (hdr *handler) Cabllback(ctx *gin.Context) {
+	code := ctx.Query("code")
+	state := ctx.Query("state")
+
+	if code == "" || state == "" {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, httputil.ErrorResponse{Message: "missing code or state"})
+		return
+	}
+
+	redirectURL, err := hdr.service.HandleCallback(ctx.Request.Context(), code, state)
+	if err != nil {
+		if errors.Is(err, ErrInvalidState) {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, httputil.ErrorResponse{Message: "invalid or expired state"})
+			return
+		}
+
+		ctx.AbortWithStatusJSON(http.StatusBadGateway, httputil.ErrorResponse{Message: "cannot complete login"})
+		return
+	}
+
+	ctx.Redirect(http.StatusFound, redirectURL)
 }

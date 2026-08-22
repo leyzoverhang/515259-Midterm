@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"time"
 	"wongnok/internal/config"
@@ -14,6 +15,8 @@ import (
 
 type Repository interface {
 	SaveState(ctx context.Context, state string, ttl time.Duration) error
+	ConsumeState(ctx context.Context, state string) error
+	SaveTicket(ctx context.Context, ticket string, credential Credential, ttl time.Duration) error
 }
 
 type service struct {
@@ -51,6 +54,30 @@ func (svc *service) BuildLoginURL(ctx context.Context) (string, error) {
 	return svc.oauth2.AuthCodeURL(state), nil
 }
 
+func (svc *service) HandleCallback(ctx context.Context, code, state string) (string, error) {
+	if err := svc.repository.ConsumeState(ctx, state); err != nil {
+		if errors.Is(err, ErrNotFound) {
+			return "", ErrInvalidState
+		}
+	}
+
+	credential, err := svc.exchangeCode(ctx, code)
+	if err != nil {
+		return "", fmt.Errorf("exchange code: %w", err)
+	}
+
+	ticket, err := generateRandomToken()
+	if err != nil {
+		return "", fmt.Errorf("generate ticket: %w", err)
+	}
+
+	if err := svc.repository.SaveTicket(ctx, ticket, credential, (30 * time.Second)); err != nil {
+		return "", fmt.Errorf("save ticket: %w", err)
+	}
+
+	return fmt.Sprintf("%s/auth/callback?ticket=%s", svc.keycloak.FrontendURL, ticket), nil
+}
+
 // Private
 func generateRandomToken() (string, error) {
 	buffer := make([]byte, 32)
@@ -59,4 +86,18 @@ func generateRandomToken() (string, error) {
 	}
 
 	return base64.RawURLEncoding.EncodeToString(buffer), nil
+}
+
+func (svc *service) exchangeCode(ctx context.Context, code string) (Credential, error) {
+	token, err := svc.oauth2.Exchange(ctx, code)
+	if err != nil {
+		return Credential{}, fmt.Errorf("%w: %v", ErrExchangeFailed, err)
+	}
+
+	return Credential{
+		AccessToken:  token.AccessToken,
+		RefreshToken: token.RefreshToken,
+		TokenType:    token.TokenType,
+		ExpiresAt:    token.Expiry,
+	}, nil
 }
