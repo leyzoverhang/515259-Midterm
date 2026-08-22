@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"syscall"
 	"wongnok/internal/config"
+	"wongnok/internal/httputil"
 	"wongnok/internal/middleware"
 	"wongnok/internal/platform/database"
 	"wongnok/internal/user"
@@ -72,19 +73,32 @@ func run() error {
 	// Group version
 	v1 := router.Group("/api/v1")
 
-	// Basic auth
-	// v1.Use(gin.BasicAuth(gin.Accounts{"admin": "secret"}))
+	// Auth resource
+	authRoute := v1.Group("/auth")
 
-	// เพิ่ม option -u เข้าไปใน curl หรือใช้ Basic auth ใน Postman
-	// curl -u username:password ...
-	v1.Use(middleware.BasicAuth())
+	// Inline GET /api/v1/auth/login
+	authRoute.GET("/login", func(ctx *gin.Context) {
+		token, err := middleware.GenerateToken("user123")
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, httputil.ErrorResponse{Message: "cannot generate token"})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{"token": token})
+	})
+
+	// User resource
+	userRoute := v1.Group("/users")
+
+	// User JWT middleware
+	userRoute.Use(middleware.JWT())
 
 	// Register path
 	// curl -X GET http://localhost:8080/api/v1/users/{id}
-	v1.GET("/users/:id", userHandler.GetUser)
+	userRoute.GET("/:id", userHandler.GetUser)
 
 	// curl -X POST http://localhost:8080/api/v1/users -H "Content-Type: application/json" -d '{"email":"taro@devpool.pea"}'
-	v1.POST("/users", userHandler.CreateUser)
+	userRoute.POST("", userHandler.CreateUser)
 
 	// Register swagger
 	router.GET("swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
