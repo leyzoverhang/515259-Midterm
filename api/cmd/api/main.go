@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"syscall"
 	"wongnok/internal/config"
+	"wongnok/internal/middleware"
 	"wongnok/internal/platform/database"
 	"wongnok/internal/user"
 
@@ -70,6 +71,13 @@ func run() error {
 
 	// Group version
 	v1 := router.Group("/api/v1")
+
+	// Basic auth
+	// v1.Use(gin.BasicAuth(gin.Accounts{"admin": "secret"}))
+
+	// เพิ่ม option -u เข้าไปใน curl หรือใช้ Basic auth ใน Postman
+	// curl -u username:password ...
+	v1.Use(middleware.BasicAuth())
 
 	// Register path
 	// curl -X GET http://localhost:8080/api/v1/users/{id}
