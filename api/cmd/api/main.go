@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	"wongnok/internal/config"
 	"wongnok/internal/platform/database"
 	"wongnok/internal/user"
 
@@ -26,10 +27,16 @@ import (
 // @BasePath		/api/v1
 // @schemas		http https
 func main() {
+	// Load configuration
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatal("load configuration:", err)
+	}
+
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	db, sqldb, err := database.Open(ctx, "postgresql://postgres:Pe@devp00l@localhost:5432?database=wongnok")
+	db, sqldb, err := database.Open(ctx, cfg.Database.PostgresDSN)
 	if err != nil {
 		log.Fatal("database connection:", err)
 	}
