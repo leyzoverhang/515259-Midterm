@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strconv"
 	"wongnok/internal/httputil"
 	"wongnok/internal/reqctx"
 
@@ -13,6 +14,7 @@ import (
 
 type Service interface {
 	Create(ctx context.Context, creatorID uuid.UUID, recipe Recipe) (*Recipe, error)
+	FindByID(ctx context.Context, id int) (*Recipe, error)
 	List(ctx context.Context, query GetRecipesQuery) ([]Recipe, int64, error)
 }
 
@@ -65,6 +67,43 @@ func (hdr *handler) Create(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusCreated, NewCreateRecipeResponse(*recipe))
+}
+
+// GetRecipe godoc
+//
+//	@Summary		เรียกดูสูตรอาหารแบบรายรายการ
+//	@Description	ค้นหาสูตรอาหารจาก id แล้วคืนข้อมูลสูตรอาหารที่เจอกลับมา
+//	@Tags			recipes
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		int	true	"Recipe ID"
+//	@Success		200	{object}	RecipeResponse
+//	@Failure		400	{object}	httputil.ErrorResponse
+//	@Failure		401	{object}	httputil.ErrorResponse
+//	@Failure		404	{object}	httputil.ErrorResponse
+//	@Failure		500	{object}	httputil.ErrorResponse
+//	@Router			/recipes/{id} [get]
+func (hdr *handler) GetRecipe(ctx *gin.Context) {
+	id, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, httputil.ErrorResponse{Message: "invalid request"})
+		return
+	}
+
+	recipe, err := hdr.service.FindByID(ctx.Request.Context(), id)
+	if err != nil {
+		switch {
+		case errors.Is(err, ErrRecipeNotFound):
+			ctx.AbortWithStatusJSON(http.StatusNotFound, httputil.ErrorResponse{Message: "recipe not found"})
+
+		default:
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, httputil.ErrorResponse{Message: "internal server error"})
+
+		}
+		return
+	}
+
+	ctx.JSON(http.StatusOK, NewRecipeResponse(*recipe))
 }
 
 // GetRecipes godoc

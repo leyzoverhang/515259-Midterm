@@ -122,6 +122,7 @@ func run() error {
 	recipeGroup.Use(middleware.JWT(oidcVerifier, userService))
 	recipeGroup.POST("", recipeHandler.Create)
 	recipeGroup.GET("", recipeHandler.GetRecipes)
+	recipeGroup.GET("/:id", recipeHandler.GetRecipe)
 
 	// Register swagger
 	router.GET("swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

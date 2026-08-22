@@ -2,6 +2,7 @@ package recipe
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -10,6 +11,7 @@ import (
 type Repository interface {
 	HasActiveReferences(ctx context.Context, difficultyID, durationID string) (bool, error)
 	Create(ctx context.Context, recipe Recipe) (*Recipe, error)
+	FindByID(ctx context.Context, id int) (*Recipe, error)
 	List(ctx context.Context, query GetRecipesQuery) ([]Recipe, int64, error)
 	DifficultyExists(ctx context.Context, id string) (bool, error)
 }
@@ -37,6 +39,19 @@ func (svc *service) Create(ctx context.Context, creatorID uuid.UUID, recipe Reci
 	recipe.CreatorID = creatorID
 
 	return svc.repository.Create(ctx, recipe)
+}
+
+func (svc *service) FindByID(ctx context.Context, id int) (*Recipe, error) {
+	recipe, err := svc.repository.FindByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, ErrRecipeNotFound) {
+			return nil, err
+		}
+
+		return nil, fmt.Errorf("find recipe: %w", err)
+	}
+
+	return recipe, nil
 }
 
 func (svc *service) List(ctx context.Context, query GetRecipesQuery) ([]Recipe, int64, error) {
