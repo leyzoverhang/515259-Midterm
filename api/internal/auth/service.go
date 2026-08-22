@@ -17,6 +17,7 @@ type Repository interface {
 	SaveState(ctx context.Context, state string, ttl time.Duration) error
 	ConsumeState(ctx context.Context, state string) error
 	SaveTicket(ctx context.Context, ticket string, credential Credential, ttl time.Duration) error
+	ConsumeTicket(ctx context.Context, ticket string) (Credential, error)
 }
 
 type service struct {
@@ -76,6 +77,18 @@ func (svc *service) HandleCallback(ctx context.Context, code, state string) (str
 	}
 
 	return fmt.Sprintf("%s/auth/callback?ticket=%s", svc.keycloak.FrontendURL, ticket), nil
+}
+
+func (svc *service) ExchangeTicket(ctx context.Context, ticket string) (Credential, error) {
+	credential, err := svc.repository.ConsumeTicket(ctx, ticket)
+	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			return Credential{}, ErrInvalidTicket
+		}
+		return Credential{}, fmt.Errorf("consume ticket: %w", err)
+	}
+
+	return credential, nil
 }
 
 // Private

@@ -12,6 +12,7 @@ import (
 type Service interface {
 	BuildLoginURL(ctx context.Context) (string, error)
 	HandleCallback(ctx context.Context, code, state string) (string, error)
+	ExchangeTicket(ctx context.Context, ticket string) (Credential, error)
 }
 
 type handler struct {
@@ -42,6 +43,18 @@ func (hdr *handler) Login(ctx *gin.Context) {
 	ctx.Redirect(http.StatusFound, authURL)
 }
 
+// Callback godoc
+//
+//	@Summary		รับ callback จาก Keycloak
+//	@Description	Keycloak redirect มาที่นี่เองอัตโนมัติ ไม่ใช่สิ่งที่ frontend เรียกตรงๆ
+//	@Tags			auth
+//	@Param			code	query		string	true	"Authorization code"
+//	@Param			state	query		string	true	"State ที่ตรงกับตอน /auth/login"
+//	@Success		302		{string}	string	"Redirect กลับ frontend พร้อม ticket"
+//	@Failure		400		{object}	httputil.ErrorResponse
+//	@Failure		401		{object}	httputil.ErrorResponse
+//	@Failure		502		{object}	httputil.ErrorResponse
+//	@Router			/auth/callback [get]
 func (hdr *handler) Cabllback(ctx *gin.Context) {
 	code := ctx.Query("code")
 	state := ctx.Query("state")
@@ -63,4 +76,36 @@ func (hdr *handler) Cabllback(ctx *gin.Context) {
 	}
 
 	ctx.Redirect(http.StatusFound, redirectURL)
+}
+
+// Exchange godoc
+//
+//	@Summary		แลก ticket เป็น credential จริง
+//	@Description	Frontend เรียกผ่าน axios หลังถูก redirect กลับมาพร้อม ticket
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		ExchangeRequest	true	"ticket"
+//	@Success		200		{object}	Credential
+//	@Failure		400		{object}	httputil.ErrorResponse
+//	@Failure		401		{object}	httputil.ErrorResponse
+//	@Router			/auth/exchange [post]
+func (hdr *handler) Exchange(ctx *gin.Context) {
+	var req ExchangeRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, httputil.ErrorResponse{Message: err.Error()})
+		return
+	}
+
+	credential, err := hdr.service.ExchangeTicket(ctx.Request.Context(), req.Ticket)
+	if err != nil {
+		if errors.Is(err, ErrInvalidTicket) {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, httputil.ErrorResponse{Message: "invalid or expired ticket"})
+			return
+		}
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, httputil.ErrorResponse{Message: "cannot exchange ticket"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, credential)
 }

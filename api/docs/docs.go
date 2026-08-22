@@ -15,6 +15,103 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/auth/callback": {
+            "get": {
+                "description": "Keycloak redirect มาที่นี่เองอัตโนมัติ ไม่ใช่สิ่งที่ frontend เรียกตรงๆ",
+                "tags": [
+                    "auth"
+                ],
+                "summary": "รับ callback จาก Keycloak",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authorization code",
+                        "name": "code",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "State ที่ตรงกับตอน /auth/login",
+                        "name": "state",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "302": {
+                        "description": "Redirect กลับ frontend พร้อม ticket",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "Bad Gateway",
+                        "schema": {
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/exchange": {
+            "post": {
+                "description": "Frontend เรียกผ่าน axios หลังถูก redirect กลับมาพร้อม ticket",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "แลก ticket เป็น credential จริง",
+                "parameters": [
+                    {
+                        "description": "ticket",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.ExchangeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.Credential"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/login": {
             "get": {
                 "description": "Redirect ไปหน้า login ของ Keycloak",
@@ -141,6 +238,35 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "internal_auth.Credential": {
+            "type": "object",
+            "properties": {
+                "accessToken": {
+                    "type": "string"
+                },
+                "expiresAt": {
+                    "type": "string"
+                },
+                "refreshToken": {
+                    "type": "string"
+                },
+                "tokenType": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_auth.ExchangeRequest": {
+            "type": "object",
+            "required": [
+                "ticket"
+            ],
+            "properties": {
+                "ticket": {
+                    "type": "string",
+                    "example": "pQx7...base64url..."
+                }
+            }
+        },
         "internal_user.CreateUserRequest": {
             "type": "object",
             "required": [

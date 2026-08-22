@@ -1,5 +1,24 @@
 basePath: /api/v1
 definitions:
+  internal_auth.Credential:
+    properties:
+      accessToken:
+        type: string
+      expiresAt:
+        type: string
+      refreshToken:
+        type: string
+      tokenType:
+        type: string
+    type: object
+  internal_auth.ExchangeRequest:
+    properties:
+      ticket:
+        example: pQx7...base64url...
+        type: string
+    required:
+    - ticket
+    type: object
   internal_user.CreateUserRequest:
     properties:
       email:
@@ -37,6 +56,70 @@ info:
   title: Wongnok API
   version: "1.0"
 paths:
+  /auth/callback:
+    get:
+      description: Keycloak redirect มาที่นี่เองอัตโนมัติ ไม่ใช่สิ่งที่ frontend เรียกตรงๆ
+      parameters:
+      - description: Authorization code
+        in: query
+        name: code
+        required: true
+        type: string
+      - description: State ที่ตรงกับตอน /auth/login
+        in: query
+        name: state
+        required: true
+        type: string
+      responses:
+        "302":
+          description: Redirect กลับ frontend พร้อม ticket
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+        "502":
+          description: Bad Gateway
+          schema:
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+      summary: รับ callback จาก Keycloak
+      tags:
+      - auth
+  /auth/exchange:
+    post:
+      consumes:
+      - application/json
+      description: Frontend เรียกผ่าน axios หลังถูก redirect กลับมาพร้อม ticket
+      parameters:
+      - description: ticket
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_auth.ExchangeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_auth.Credential'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+      summary: แลก ticket เป็น credential จริง
+      tags:
+      - auth
   /auth/login:
     get:
       description: Redirect ไปหน้า login ของ Keycloak

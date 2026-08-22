@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -29,16 +30,15 @@ func (repo *repository) SaveState(ctx context.Context, state string, ttl time.Du
 func (repo *repository) ConsumeState(ctx context.Context, state string) error {
 	key := oauthPrefix + state
 
-	exists, err := repo.cache.Exists(ctx, key).Result()
-	if err != nil {
+	if _, err := repo.cache.GetDel(ctx, key).Result(); err != nil {
+		if errors.Is(err, redis.Nil) {
+			return ErrNotFound
+		}
+
 		return err
 	}
 
-	if exists == 0 {
-		return ErrNotFound
-	}
-
-	return repo.cache.Del(ctx, key).Err()
+	return nil
 }
 
 func (repo *repository) SaveTicket(ctx context.Context, ticket string, credential Credential, ttl time.Duration) error {
@@ -48,4 +48,24 @@ func (repo *repository) SaveTicket(ctx context.Context, ticket string, credentia
 	}
 
 	return repo.cache.Set(ctx, (oauthPrefix + ticket), payload, ttl).Err()
+}
+
+func (repo *repository) ConsumeTicket(ctx context.Context, ticket string) (Credential, error) {
+	key := oauthPrefix + ticket
+
+	payload, err := repo.cache.GetDel(ctx, key).Bytes()
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return Credential{}, ErrNotFound
+		}
+
+		return Credential{}, err
+	}
+
+	var credential Credential
+	if err := json.Unmarshal(payload, &credential); err != nil {
+		return Credential{}, err
+	}
+
+	return credential, nil
 }
