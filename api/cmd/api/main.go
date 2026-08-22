@@ -53,7 +53,7 @@ func run() error {
 
 	db, sqldb, err := database.Open(ctx, cfg.Database.PostgresDSN)
 	if err != nil {
-		log.Fatal("database connection:", err)
+		return fmt.Errorf("connect database: %w", err)
 	}
 	defer sqldb.Close()
 
