@@ -8,4 +8,5 @@ var (
 	ErrInvalidState   = errors.New("invalid or expired state")
 	ErrInvalidTicket  = errors.New("invalid or expired ticket")
 	ErrExchangeFailed = errors.New("exchange code failed")
+	ErrLogoutFailed   = errors.New("logout failed")
 )

@@ -13,6 +13,7 @@ type Service interface {
 	BuildLoginURL(ctx context.Context) (string, error)
 	HandleCallback(ctx context.Context, code, state string) (string, error)
 	ExchangeTicket(ctx context.Context, ticket string) (Credential, error)
+	Logout(ctx context.Context, refreshToken string) error
 }
 
 type handler struct {
@@ -108,4 +109,31 @@ func (hdr *handler) Exchange(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, credential)
+}
+
+// Logout godoc
+//
+//	@Summary		ออกจากระบบ
+//	@Description	Revoke refresh token ที่ Keycloak จริง
+//	@Tags			auth
+//	@Security		BearerAuth
+//	@Accept			json
+//	@Param			request	body	LogoutRequest	true	"refresh token"
+//	@Success		204		"Logout สำเร็จ"
+//	@Failure		400		{object}	httputil.ErrorResponse
+//	@Failure		502		{object}	httputil.ErrorResponse
+//	@Router			/auth/logout [post]
+func (hdr *handler) Logout(ctx *gin.Context) {
+	var req LogoutRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, httputil.ErrorResponse{Message: err.Error()})
+		return
+	}
+
+	if err := hdr.service.Logout(ctx.Request.Context(), req.RefreshToken); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadGateway, httputil.ErrorResponse{Message: "logout failed"})
+		return
+	}
+
+	ctx.Status(http.StatusNoContent)
 }

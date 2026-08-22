@@ -19,6 +19,14 @@ definitions:
     required:
     - ticket
     type: object
+  internal_auth.LogoutRequest:
+    properties:
+      refreshToken:
+        example: eyJhbGci...
+        type: string
+    required:
+    - refreshToken
+    type: object
   internal_user.CreateUserRequest:
     properties:
       email:
@@ -133,6 +141,34 @@ paths:
           schema:
             $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
       summary: เริ่ม login ผ่าน Keycloak
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Revoke refresh token ที่ Keycloak จริง
+      parameters:
+      - description: refresh token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_auth.LogoutRequest'
+      responses:
+        "204":
+          description: Logout สำเร็จ
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+        "502":
+          description: Bad Gateway
+          schema:
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: ออกจากระบบ
       tags:
       - auth
   /users:

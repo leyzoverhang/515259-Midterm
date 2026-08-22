@@ -6,6 +6,9 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
+	"strings"
 	"time"
 	"wongnok/internal/config"
 
@@ -24,6 +27,7 @@ type service struct {
 	repository Repository
 	keycloak   config.Keycloak
 	oauth2     *oauth2.Config
+	http       *http.Client
 }
 
 func NewService(repo Repository, keycloak config.Keycloak, provider *oidc.Provider) *service {
@@ -39,6 +43,7 @@ func NewService(repo Repository, keycloak config.Keycloak, provider *oidc.Provid
 		repository: repo,
 		keycloak:   keycloak,
 		oauth2:     oauthConf,
+		http:       &http.Client{Timeout: (10 * time.Second)},
 	}
 }
 
@@ -89,6 +94,34 @@ func (svc *service) ExchangeTicket(ctx context.Context, ticket string) (Credenti
 	}
 
 	return credential, nil
+}
+
+func (svc *service) Logout(ctx context.Context, refreshToken string) error {
+	logoutURL := fmt.Sprintf("%s/protocol/openid-connect/logout", svc.keycloak.RealmURL())
+
+	form := url.Values{
+		"client_id":     {svc.keycloak.ClientID},
+		"client_secret": {svc.keycloak.ClientSecret},
+		"refresh_token": {refreshToken},
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, logoutURL, strings.NewReader(form.Encode()))
+	if err != nil {
+		return fmt.Errorf("build logout request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := svc.http.Do(req)
+	if err != nil {
+		return fmt.Errorf("call keycloak logout: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNoContent {
+		return ErrLogoutFailed
+	}
+
+	return nil
 }
 
 // Private
