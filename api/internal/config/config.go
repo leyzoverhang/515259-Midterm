@@ -8,7 +8,9 @@ import (
 )
 
 type Config struct {
+	App      App
 	Database Database
+	Logging  Logging
 }
 
 func Load() (Config, error) {

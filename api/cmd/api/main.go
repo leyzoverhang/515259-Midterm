@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 	"wongnok/internal/config"
 	"wongnok/internal/platform/database"
 	"wongnok/internal/user"
@@ -27,11 +29,24 @@ import (
 // @BasePath		/api/v1
 // @schemas		http https
 func main() {
+	if err := run(); err != nil {
+		slog.Error("service stopped", "error", err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
+	// Default logger
+	slog.SetDefault(newLogger(os.Stdout, "wongnok", config.Logging{Level: "DEBUG", Format: "text"}))
+
 	// Load configuration
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatal("load configuration:", err)
+		return fmt.Errorf("load configuration:\n%s", err)
 	}
+
+	// Setup logger
+	slog.SetDefault(newLogger(os.Stdout, cfg.App.Name, cfg.Logging))
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -68,18 +83,29 @@ func main() {
 
 	// Server
 	serv := &http.Server{
-		Addr:    ":8080",
+		Addr:    cfg.App.Addr(),
 		Handler: router,
 	}
 
 	go serv.ListenAndServe()
-	log.Println("server started at :8080")
+	log.Printf("server started at %s\n", cfg.App.Addr())
 
 	// Graceful shutdown
 	<-ctx.Done()
 
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), (10 * time.Second))
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.App.ShutdownTimeout)
 	defer cancel()
 
-	serv.Shutdown(shutdownCtx)
+	return serv.Shutdown(shutdownCtx)
+}
+
+func newLogger(writer io.Writer, name string, log config.Logging) *slog.Logger {
+	opts := &slog.HandlerOptions{Level: log.SlogLevel()}
+
+	var handler slog.Handler = slog.NewJSONHandler(writer, opts)
+	if log.Format == "text" {
+		handler = slog.NewTextHandler(writer, opts)
+	}
+
+	return slog.New(handler).With("service", name)
 }
