@@ -10,14 +10,16 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"wongnok/internal/auth"
 	"wongnok/internal/config"
-	"wongnok/internal/httputil"
 	"wongnok/internal/middleware"
+	"wongnok/internal/platform/cache"
 	"wongnok/internal/platform/database"
 	"wongnok/internal/user"
 
 	_ "wongnok/docs"
 
+	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -58,13 +60,31 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	// Database connection
 	db, sqldb, err := database.Open(ctx, cfg.Database.PostgresDSN)
 	if err != nil {
 		return fmt.Errorf("connect database: %w", err)
 	}
 	defer sqldb.Close()
 
+	// Redis connection
+	rdb, err := cache.Open(ctx, cfg.Redis)
+	if err != nil {
+		return fmt.Errorf("connect redis: %w", err)
+	}
+	defer rdb.Close()
+
+	// Provider
+	oidcProvider, err := oidc.NewProvider(ctx, cfg.Keycloak.RealmURL())
+	if err != nil {
+		return fmt.Errorf("discover keycloak provider: %w", err)
+	}
+
 	// Dependency injection
+	authRepo := auth.NewRepository(rdb)
+	authService := auth.NewService(authRepo, cfg.Keycloak, oidcProvider)
+	authHandler := auth.NewHandler(authService)
+
 	userRepo := user.NewRepository(db)
 	userService := user.NewService(userRepo)
 	userHandler := user.NewHandler(userService)
@@ -79,31 +99,21 @@ func run() error {
 	v1 := router.Group("/api/v1")
 
 	// Auth resource
-	authRoute := v1.Group("/auth")
-
-	// Inline GET /api/v1/auth/login
-	authRoute.GET("/login", func(ctx *gin.Context) {
-		token, err := middleware.GenerateToken("user123")
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, httputil.ErrorResponse{Message: "cannot generate token"})
-			return
-		}
-
-		ctx.JSON(http.StatusOK, gin.H{"token": token})
-	})
+	authGroup := v1.Group("/auth")
+	authGroup.GET("/login", authHandler.Login)
 
 	// User resource
-	userRoute := v1.Group("/users")
+	userGroup := v1.Group("/users")
 
 	// User JWT middleware
-	userRoute.Use(middleware.JWT())
+	userGroup.Use(middleware.JWT())
 
 	// Register path
 	// curl -X GET http://localhost:8080/api/v1/users/{id}
-	userRoute.GET("/:id", userHandler.GetUser)
+	userGroup.GET("/:id", userHandler.GetUser)
 
 	// curl -X POST http://localhost:8080/api/v1/users -H "Content-Type: application/json" -d '{"email":"taro@devpool.pea"}'
-	userRoute.POST("", userHandler.CreateUser)
+	userGroup.POST("", userHandler.CreateUser)
 
 	// Register swagger
 	router.GET("swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

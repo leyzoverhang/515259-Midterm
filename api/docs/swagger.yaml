@@ -37,6 +37,21 @@ info:
   title: Wongnok API
   version: "1.0"
 paths:
+  /auth/login:
+    get:
+      description: Redirect ไปหน้า login ของ Keycloak
+      responses:
+        "302":
+          description: Redirect ไป Keycloak
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+      summary: เริ่ม login ผ่าน Keycloak
+      tags:
+      - auth
   /users:
     post:
       description: สร้าง user โดยรับข้อมูลมาจาก Client และ generate uuid ให้ พร้อมส่งรายละเอียดของ

@@ -16,6 +16,7 @@ type Config struct {
 	Database Database
 	Logging  Logging
 	Keycloak Keycloak
+	Redis    Redis
 }
 
 func Load() (Config, error) {
@@ -37,5 +38,6 @@ func (cfg Config) Validate() error {
 		cfg.Database.Validate(),
 		cfg.Logging.Validate(),
 		cfg.Keycloak.Validate(),
+		cfg.Redis.Validate(),
 	)
 }

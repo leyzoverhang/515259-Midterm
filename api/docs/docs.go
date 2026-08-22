@@ -15,6 +15,29 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/auth/login": {
+            "get": {
+                "description": "Redirect ไปหน้า login ของ Keycloak",
+                "tags": [
+                    "auth"
+                ],
+                "summary": "เริ่ม login ผ่าน Keycloak",
+                "responses": {
+                    "302": {
+                        "description": "Redirect ไป Keycloak",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/users": {
             "post": {
                 "security": [
