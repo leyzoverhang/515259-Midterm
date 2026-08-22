@@ -1,5 +1,7 @@
 package recipe
 
+import "time"
+
 type CreateRecipeRequest struct {
 	Name         string                      `json:"name" binding:"required"`
 	Description  string                      `json:"description" binding:"required"`
@@ -52,4 +54,150 @@ type CreateRecipeResponse struct {
 
 func NewCreateRecipeResponse(recipe Recipe) CreateRecipeResponse {
 	return CreateRecipeResponse{ID: recipe.ID}
+}
+
+type SortDirection string
+
+const (
+	AscendingSortDirection  SortDirection = "ASC"
+	DescendingSortDirection SortDirection = "DESC"
+)
+
+func (direction *SortDirection) Ensure() {
+	if direction == nil {
+		return
+	}
+
+	if *direction == "" {
+		*direction = DescendingSortDirection
+	}
+}
+
+type Pagination struct {
+	Page  int `form:"page" binding:"omitempty,min=1"`
+	Limit int `form:"limit" binding:"omitempty,min=1,max=100"`
+}
+
+func (pg *Pagination) Ensure() {
+	if pg.Page <= 0 {
+		pg.Page = 1
+
+	}
+
+	if pg.Limit <= 0 || pg.Limit > 100 {
+		pg.Limit = 12
+
+	}
+}
+
+type GetRecipesQuery struct {
+	Pagination
+	Name       string        `form:"name"`
+	Difficulty string        `form:"difficulty"`
+	Sort       SortDirection `form:"sort" binding:"omitempty,oneof=ASC DESC"`
+}
+
+func (query *GetRecipesQuery) Ensure() {
+	query.Pagination.Ensure()
+	query.Sort.Ensure()
+}
+
+// Response get recipes
+type CreatorResponse struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type DifficultyResponse struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type DurationResponse struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type IngredientResponse struct {
+	ID          int    `json:"id"`
+	Description string `json:"description"`
+}
+
+type InstructionResponse struct {
+	ID          int    `json:"id"`
+	Description string `json:"description"`
+}
+
+type RecipeResponse struct {
+	ID           int                   `json:"id"`
+	Name         string                `json:"name"`
+	Description  string                `json:"description"`
+	ImageURL     *string               `json:"imageUrl"`
+	Difficulty   DifficultyResponse    `json:"difficulty"`
+	Duration     DurationResponse      `json:"duration"`
+	Ingredients  []IngredientResponse  `json:"ingredients"`
+	Instructions []InstructionResponse `json:"instructions"`
+	Creator      CreatorResponse       `json:"creator"`
+	CreatedAt    time.Time             `json:"createdAt"`
+	UpdatedAt    time.Time             `json:"updatedAt"`
+}
+
+func NewRecipeResponse(recipe Recipe) RecipeResponse {
+	ingredients := make([]IngredientResponse, 0, len(recipe.Ingredients))
+	for _, ingredient := range recipe.Ingredients {
+		ingredients = append(ingredients, IngredientResponse{
+			ID:          ingredient.ID,
+			Description: ingredient.Description,
+		})
+	}
+
+	instructions := make([]InstructionResponse, 0, len(recipe.Instructions))
+	for _, instruction := range recipe.Instructions {
+		instructions = append(instructions, InstructionResponse{
+			ID:          instruction.ID,
+			Description: instruction.Description,
+		})
+	}
+
+	return RecipeResponse{
+		ID:          recipe.ID,
+		Name:        recipe.Name,
+		Description: recipe.Description,
+		ImageURL:    recipe.ImageURL,
+		Difficulty: DifficultyResponse{
+			ID:   recipe.Difficulty.ID,
+			Name: recipe.Difficulty.Name,
+		},
+		Duration: DurationResponse{
+			ID:   recipe.Duration.ID,
+			Name: recipe.Duration.Name,
+		},
+		Ingredients:  ingredients,
+		Instructions: instructions,
+		Creator: CreatorResponse{
+			ID:   recipe.Creator.ID.String(),
+			Name: *recipe.Creator.Name,
+		},
+		CreatedAt: recipe.CreatedAt,
+		UpdatedAt: recipe.UpdatedAt,
+	}
+}
+
+type ListResponse[T any] struct {
+	Total   int64 `json:"total"`
+	Results []T   `json:"results"`
+}
+
+type ListRecipesResponse ListResponse[RecipeResponse]
+
+func NewListRecipesResponse(recipes []Recipe, total int64) ListRecipesResponse {
+	results := make([]RecipeResponse, 0, len(recipes))
+	for _, recipe := range recipes {
+		results = append(results, NewRecipeResponse(recipe))
+	}
+
+	return ListRecipesResponse{
+		Total:   total,
+		Results: results,
+	}
 }

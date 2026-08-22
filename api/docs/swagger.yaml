@@ -60,6 +60,50 @@ definitions:
       id:
         type: integer
     type: object
+  internal_recipe.CreatorResponse:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  internal_recipe.DifficultyResponse:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  internal_recipe.DurationResponse:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  internal_recipe.IngredientResponse:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+    type: object
+  internal_recipe.InstructionResponse:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+    type: object
+  internal_recipe.ListRecipesResponse:
+    properties:
+      results:
+        items:
+          $ref: '#/definitions/internal_recipe.RecipeResponse'
+        type: array
+      total:
+        type: integer
+    type: object
   internal_recipe.RecipeIngredientRequest:
     properties:
       description:
@@ -73,6 +117,35 @@ definitions:
         type: string
     required:
     - description
+    type: object
+  internal_recipe.RecipeResponse:
+    properties:
+      createdAt:
+        type: string
+      creator:
+        $ref: '#/definitions/internal_recipe.CreatorResponse'
+      description:
+        type: string
+      difficulty:
+        $ref: '#/definitions/internal_recipe.DifficultyResponse'
+      duration:
+        $ref: '#/definitions/internal_recipe.DurationResponse'
+      id:
+        type: integer
+      imageUrl:
+        type: string
+      ingredients:
+        items:
+          $ref: '#/definitions/internal_recipe.IngredientResponse'
+        type: array
+      instructions:
+        items:
+          $ref: '#/definitions/internal_recipe.InstructionResponse'
+        type: array
+      name:
+        type: string
+      updatedAt:
+        type: string
     type: object
   internal_user.UserResponse:
     properties:
@@ -208,6 +281,66 @@ paths:
       tags:
       - auth
   /recipes:
+    get:
+      description: ค้นหาสูตรอาหารทั้งหมด และสามารถกรองด้วย ชื่อ, ความยาก และเรียงตามเวลาที่สร้างได้
+      parameters:
+      - description: ชื่อของสูตรอาหาร
+        in: query
+        name: name
+        type: string
+      - description: Id ของความยากในการทำ
+        in: query
+        name: difficulty
+        type: string
+      - default: DESC
+        description: เรียงลำดับตามเวลาที่สร้าง
+        enum:
+        - ASC
+        - DESC
+        in: query
+        name: sort
+        type: string
+      - default: 1
+        description: หน้าที่ต้องการแสดง
+        in: query
+        minimum: 1
+        name: page
+        type: integer
+      - default: 12
+        description: จำนวนรายการต่อหน้า
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_recipe.ListRecipesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: เรียกดูสูตรอาหารทั้งหมด
+      tags:
+      - recipes
     post:
       consumes:
       - application/json
