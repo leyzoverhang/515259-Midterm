@@ -80,6 +80,8 @@ func run() error {
 		return fmt.Errorf("discover keycloak provider: %w", err)
 	}
 
+	oidcVerifier := oidcProvider.Verifier(&oidc.Config{ClientID: cfg.Keycloak.ClientID})
+
 	// Dependency injection
 	authRepo := auth.NewRepository(rdb)
 	authService := auth.NewService(authRepo, cfg.Keycloak, oidcProvider)
@@ -109,7 +111,7 @@ func run() error {
 	userGroup := v1.Group("/users")
 
 	// User JWT middleware
-	userGroup.Use(middleware.JWT())
+	userGroup.Use(middleware.JWT(oidcVerifier))
 
 	// Register path
 	// curl -X GET http://localhost:8080/api/v1/users/{id}
