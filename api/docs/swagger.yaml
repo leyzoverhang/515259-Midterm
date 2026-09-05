@@ -136,6 +136,12 @@ definitions:
     type: object
   internal_recipe.RecipeResponse:
     properties:
+      averageRating:
+        description: |-
+          AverageRating: field แบนตามที่โจทย์ระบุ ("ส่ง averageRating เพิ่มเข้ามา")
+          Rating: object เดียวกันแต่รวม total (จำนวนคนให้คะแนน) ไว้ด้วย เผื่อ frontend ต้องใช้
+          ค่าเดียวกัน มาจากที่เดียวกันคือ recipe.AverageRating เสมอ ไม่มีทางไม่ตรงกัน
+        type: number
       createdAt:
         type: string
       creator:

@@ -817,6 +817,10 @@ const docTemplate = `{
         "internal_recipe.RecipeResponse": {
             "type": "object",
             "properties": {
+                "averageRating": {
+                    "description": "AverageRating: field แบนตามที่โจทย์ระบุ (\"ส่ง averageRating เพิ่มเข้ามา\")\nRating: object เดียวกันแต่รวม total (จำนวนคนให้คะแนน) ไว้ด้วย เผื่อ frontend ต้องใช้\nค่าเดียวกัน มาจากที่เดียวกันคือ recipe.AverageRating เสมอ ไม่มีทางไม่ตรงกัน",
+                    "type": "number"
+                },
                 "createdAt": {
                     "type": "string"
                 },

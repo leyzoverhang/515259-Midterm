@@ -145,9 +145,13 @@ type RecipeResponse struct {
 	Instructions []InstructionResponse `json:"instructions"`
 	Creator      CreatorResponse       `json:"creator"`
 	IsFavorite   bool                  `json:"isFavorite"` // true ถ้า user ที่ล็อกอินกดโปรดสูตรนี้ไว้
-	Rating       RatingResponse        `json:"rating"`
-	CreatedAt    time.Time             `json:"createdAt"`
-	UpdatedAt    time.Time             `json:"updatedAt"`
+	// AverageRating: field แบนตามที่โจทย์ระบุ ("ส่ง averageRating เพิ่มเข้ามา")
+	// Rating: object เดียวกันแต่รวม total (จำนวนคนให้คะแนน) ไว้ด้วย เผื่อ frontend ต้องใช้
+	// ค่าเดียวกัน มาจากที่เดียวกันคือ recipe.AverageRating เสมอ ไม่มีทางไม่ตรงกัน
+	AverageRating float64              `json:"averageRating"`
+	Rating        RatingResponse       `json:"rating"`
+	CreatedAt     time.Time            `json:"createdAt"`
+	UpdatedAt     time.Time            `json:"updatedAt"`
 }
 
 func NewRecipeResponse(view RecipeView) RecipeResponse {
@@ -190,7 +194,8 @@ func NewRecipeResponse(view RecipeView) RecipeResponse {
 		},
 
 		// IsFavorite/RatingTotal มาจาก service.attachMeta (batch query แยกจาก List/FindByID)
-		IsFavorite: view.IsFavorite,
+		IsFavorite:    view.IsFavorite,
+		AverageRating: recipe.AverageRating,
 		Rating: RatingResponse{
 			Average: recipe.AverageRating,
 			Total:   view.RatingTotal,
