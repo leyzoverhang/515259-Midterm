@@ -59,6 +59,9 @@ func TestHandler_Favorite_Success_Returns204(t *testing.T) {
 		gin.Params{{Key: "id", Value: "42"}}, &userID)
 
 	hdr.Favorite(ctx)
+	// เรียก handler ตรงๆ (ไม่ผ่าน engine.ServeHTTP) ดังนั้นต้อง flush header เอง
+	// เพราะ gin เก็บ status ไว้ใน buffer แล้วค่อยเขียนตอน WriteHeaderNow (ปกติ engine เป็นคนเรียกให้)
+	ctx.Writer.WriteHeaderNow()
 
 	assert.Equal(t, http.StatusNoContent, w.Code)
 }
@@ -136,6 +139,7 @@ func TestHandler_Rate_Success_Returns204(t *testing.T) {
 		gin.Params{{Key: "id", Value: "7"}}, &userID)
 
 	hdr.Rate(ctx)
+	ctx.Writer.WriteHeaderNow() // ดูคอมเมนต์ใน TestHandler_Favorite_Success_Returns204 ด้านบน
 
 	assert.Equal(t, http.StatusNoContent, w.Code)
 }
