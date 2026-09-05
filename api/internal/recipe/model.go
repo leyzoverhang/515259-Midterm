@@ -63,3 +63,30 @@ type RecipeInstruction struct {
 	UpdatedAt   time.Time
 	DeletedAt   gorm.DeletedAt
 }
+
+type UserFavorite struct {
+	UserID    uuid.UUID      `gorm:"primaryKey"`
+	RecipeID  int            `gorm:"primaryKey"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt
+}
+
+type RecipeRating struct {
+	UserID    uuid.UUID      `gorm:"primaryKey"`
+	RecipeID  int            `gorm:"primaryKey"`
+	Score     float64        `gorm:"not null;default:0"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt
+}
+
+// RecipeView bundles a Recipe with per-viewer metadata that depends on who
+// is asking (favorite status, total number of ratings) rather than on the
+// recipe row itself.
+type RecipeView struct {
+	Recipe
+	IsFavorite  bool
+	RatingTotal int64
+}
+

@@ -30,6 +30,10 @@ func JWT(verifier *oidc.IDTokenVerifier, userResolver UserResolver) gin.HandlerF
 
 		rawToken := strings.TrimPrefix(authHeader, bearerPrefix)
 
+		// เราตรวจ Access Token ที่ frontend ส่งมา ไม่ใช่ ID Token
+		// เลยต้องใช้ verifier ตัวที่ SkipClientIDCheck (ดูใน main.go: accessTokenVerifier)
+		// เพราะ aud ของ Access Token ของ Keycloak ไม่เท่ากับ client_id ของเรา
+		// แต่ signature/issuer/expiry ยังถูกตรวจจริงเหมือนเดิมทุกอย่าง
 		idToken, err := verifier.Verify(ctx.Request.Context(), rawToken)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})

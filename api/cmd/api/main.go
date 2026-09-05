@@ -68,6 +68,11 @@ func run() error {
 	}
 	defer sqldb.Close()
 
+	// user_favorites/recipe_ratings ถูกสร้างโดย goose migration อยู่แล้ว AutoMigrate ตรงนี้
+	// เป็นแค่ safety net เผื่อ struct tag เปลี่ยนแล้วลืม migration ตาม ไม่ได้ทดแทน goose
+	if err := db.AutoMigrate(&user.User{}, &recipe.Recipe{}, &recipe.UserFavorite{}, &recipe.RecipeRating{}); err != nil {
+		return fmt.Errorf("auto migrate: %w", err)
+	}
 	// Redis connection
 	rdb, err := cache.Open(ctx, cfg.Redis)
 	if err != nil {
@@ -82,6 +87,12 @@ func run() error {
 	}
 
 	oidcVerifier := oidcProvider.Verifier(&oidc.Config{ClientID: cfg.Keycloak.ClientID})
+
+	// verifier แยกสำหรับ Access Token (ใช้กับ middleware.JWT บน endpoint ปกติ)
+	// SkipClientIDCheck: true เพราะ Access Token ของ Keycloak มี aud เป็น "account" (ค่า default)
+	// ไม่ใช่ client_id ของเรา — ต่างจาก ID Token ที่ aud ต้องเท่ากับ client_id เป๊ะ
+	// signature / issuer / expiry ยังถูกตรวจเหมือนเดิมทุกอย่าง แค่ข้าม audience check ตัวเดียว
+	accessTokenVerifier := oidcProvider.Verifier(&oidc.Config{ClientID: cfg.Keycloak.ClientID, SkipClientIDCheck: true})
 
 	// Dependency injection
 	userRepo := user.NewRepository(db, rdb)
@@ -114,15 +125,20 @@ func run() error {
 
 	// User resource
 	userGroup := v1.Group("/users")
-	userGroup.Use(middleware.JWT(oidcVerifier, userService))
+	userGroup.Use(middleware.JWT(accessTokenVerifier, userService))
 	userGroup.GET("/:id", userHandler.GetUser)
 
 	// Recipe resource
 	recipeGroup := v1.Group("/recipes")
-	recipeGroup.Use(middleware.JWT(oidcVerifier, userService))
+	recipeGroup.Use(middleware.JWT(accessTokenVerifier, userService))
 	recipeGroup.POST("", recipeHandler.Create)
 	recipeGroup.GET("", recipeHandler.GetRecipes)
 	recipeGroup.GET("/:id", recipeHandler.GetRecipe)
+
+	// favorite/rating ต้องผ่าน middleware.JWT เหมือน route อื่นในกลุ่มนี้ (recipeGroup.Use ด้านบน)
+	recipeGroup.POST("/:id/favorite", recipeHandler.Favorite)
+	recipeGroup.DELETE("/:id/favorite", recipeHandler.Unfavorite)
+	recipeGroup.POST("/:id/rating", recipeHandler.Rate)
 
 	// Register swagger
 	router.GET("swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

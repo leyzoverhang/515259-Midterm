@@ -1,6 +1,6 @@
 basePath: /api/v1
 definitions:
-  auth.Credential:
+  internal_auth.Credential:
     properties:
       accessToken:
         type: string
@@ -11,7 +11,7 @@ definitions:
       tokenType:
         type: string
     type: object
-  auth.ExchangeRequest:
+  internal_auth.ExchangeRequest:
     properties:
       ticket:
         example: pQx7...base64url...
@@ -19,7 +19,7 @@ definitions:
     required:
     - ticket
     type: object
-  auth.LogoutRequest:
+  internal_auth.LogoutRequest:
     properties:
       refreshToken:
         example: eyJhbGci...
@@ -27,14 +27,7 @@ definitions:
     required:
     - refreshToken
     type: object
-  httputil.ErrorResponse:
-    properties:
-      code:
-        type: string
-      message:
-        type: string
-    type: object
-  recipe.CreateRecipeRequest:
+  internal_recipe.CreateRecipeRequest:
     properties:
       description:
         type: string
@@ -46,11 +39,11 @@ definitions:
         type: string
       ingredients:
         items:
-          $ref: '#/definitions/recipe.RecipeIngredientRequest'
+          $ref: '#/definitions/internal_recipe.RecipeIngredientRequest'
         type: array
       instructions:
         items:
-          $ref: '#/definitions/recipe.RecipeInstructionRequest'
+          $ref: '#/definitions/internal_recipe.RecipeInstructionRequest'
         type: array
       name:
         type: string
@@ -62,99 +55,120 @@ definitions:
     - instructions
     - name
     type: object
-  recipe.CreateRecipeResponse:
+  internal_recipe.CreateRecipeResponse:
     properties:
       id:
         type: integer
     type: object
-  recipe.CreatorResponse:
+  internal_recipe.CreatorResponse:
     properties:
       id:
         type: string
       name:
         type: string
     type: object
-  recipe.DifficultyResponse:
+  internal_recipe.DifficultyResponse:
     properties:
       id:
         type: string
       name:
         type: string
     type: object
-  recipe.DurationResponse:
+  internal_recipe.DurationResponse:
     properties:
       id:
         type: string
       name:
         type: string
     type: object
-  recipe.IngredientResponse:
+  internal_recipe.IngredientResponse:
     properties:
       description:
         type: string
       id:
         type: integer
     type: object
-  recipe.InstructionResponse:
+  internal_recipe.InstructionResponse:
     properties:
       description:
         type: string
       id:
         type: integer
     type: object
-  recipe.ListRecipesResponse:
+  internal_recipe.ListRecipesResponse:
     properties:
       results:
         items:
-          $ref: '#/definitions/recipe.RecipeResponse'
+          $ref: '#/definitions/internal_recipe.RecipeResponse'
         type: array
       total:
         type: integer
     type: object
-  recipe.RecipeIngredientRequest:
+  internal_recipe.RateRecipeRequest:
+    properties:
+      rating:
+        maximum: 5
+        minimum: 1
+        type: number
+    required:
+    - rating
+    type: object
+  internal_recipe.RatingResponse:
+    properties:
+      average:
+        type: number
+      total:
+        type: integer
+    type: object
+  internal_recipe.RecipeIngredientRequest:
     properties:
       description:
         type: string
     required:
     - description
     type: object
-  recipe.RecipeInstructionRequest:
+  internal_recipe.RecipeInstructionRequest:
     properties:
       description:
         type: string
     required:
     - description
     type: object
-  recipe.RecipeResponse:
+  internal_recipe.RecipeResponse:
     properties:
       createdAt:
         type: string
       creator:
-        $ref: '#/definitions/recipe.CreatorResponse'
+        $ref: '#/definitions/internal_recipe.CreatorResponse'
       description:
         type: string
       difficulty:
-        $ref: '#/definitions/recipe.DifficultyResponse'
+        $ref: '#/definitions/internal_recipe.DifficultyResponse'
       duration:
-        $ref: '#/definitions/recipe.DurationResponse'
+        $ref: '#/definitions/internal_recipe.DurationResponse'
       id:
         type: integer
       imageUrl:
         type: string
       ingredients:
         items:
-          $ref: '#/definitions/recipe.IngredientResponse'
+          $ref: '#/definitions/internal_recipe.IngredientResponse'
         type: array
       instructions:
         items:
-          $ref: '#/definitions/recipe.InstructionResponse'
+          $ref: '#/definitions/internal_recipe.InstructionResponse'
         type: array
+      isFavorite:
+        description: true ถ้า user ที่ล็อกอินกดโปรดสูตรนี้ไว้
+        type: boolean
       name:
         type: string
+      rating:
+        $ref: '#/definitions/internal_recipe.RatingResponse'
       updatedAt:
         type: string
     type: object
-  user.UserResponse:
+  internal_user.UserResponse:
     properties:
       email:
         example: somchai@pea.co.th
@@ -164,6 +178,13 @@ definitions:
         type: string
       name:
         example: สมชาย ใจดี
+        type: string
+    type: object
+  wongnok_internal_httputil.ErrorResponse:
+    properties:
+      code:
+        type: string
+      message:
         type: string
     type: object
 host: localhost:8080
@@ -195,15 +216,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/httputil.ErrorResponse'
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/httputil.ErrorResponse'
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
         "502":
           description: Bad Gateway
           schema:
-            $ref: '#/definitions/httputil.ErrorResponse'
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
       summary: รับ callback จาก Keycloak
       tags:
       - auth
@@ -218,22 +239,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/auth.ExchangeRequest'
+          $ref: '#/definitions/internal_auth.ExchangeRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/auth.Credential'
+            $ref: '#/definitions/internal_auth.Credential'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/httputil.ErrorResponse'
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/httputil.ErrorResponse'
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
       summary: แลก ticket เป็น credential จริง
       tags:
       - auth
@@ -248,7 +269,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/httputil.ErrorResponse'
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
       summary: เริ่ม login ผ่าน Keycloak
       tags:
       - auth
@@ -263,18 +284,18 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/auth.LogoutRequest'
+          $ref: '#/definitions/internal_auth.LogoutRequest'
       responses:
         "204":
           description: Logout สำเร็จ
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/httputil.ErrorResponse'
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
         "502":
           description: Bad Gateway
           schema:
-            $ref: '#/definitions/httputil.ErrorResponse'
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
       security:
       - BearerAuth: []
       summary: ออกจากระบบ
@@ -282,7 +303,7 @@ paths:
       - auth
   /recipes:
     get:
-      description: ค้นหาสูตรอาหารทั้งหมด และสามารถกรองด้วย ชื่อ, ความยาก และเรียงตามเวลาที่สร้างได้
+      description: ค้นหาสูตรอาหารทั้งหมด กรองด้วยชื่อ/ความยาก/รายการโปรด และเรียงตามเวลาที่สร้างได้
       parameters:
       - description: ชื่อของสูตรอาหาร
         in: query
@@ -292,6 +313,11 @@ paths:
         in: query
         name: difficulty
         type: string
+      - description: 'กรองตามรายการโปรด: true = เฉพาะที่กดโปรด, false = เฉพาะที่ยังไม่กด,
+          ไม่ส่ง = ทั้งหมด'
+        in: query
+        name: favorite
+        type: boolean
       - default: DESC
         description: เรียงลำดับตามเวลาที่สร้าง
         enum:
@@ -319,23 +345,23 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/recipe.ListRecipesResponse'
+            $ref: '#/definitions/internal_recipe.ListRecipesResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/httputil.ErrorResponse'
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/httputil.ErrorResponse'
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/httputil.ErrorResponse'
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/httputil.ErrorResponse'
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
       security:
       - BearerAuth: []
       summary: เรียกดูสูตรอาหารทั้งหมด
@@ -351,26 +377,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/recipe.CreateRecipeRequest'
+          $ref: '#/definitions/internal_recipe.CreateRecipeRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/recipe.CreateRecipeResponse'
+            $ref: '#/definitions/internal_recipe.CreateRecipeResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/httputil.ErrorResponse'
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/httputil.ErrorResponse'
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/httputil.ErrorResponse'
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
       security:
       - BearerAuth: []
       summary: สร้างสูตรอาหาร
@@ -391,26 +417,134 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/recipe.RecipeResponse'
+            $ref: '#/definitions/internal_recipe.RecipeResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/httputil.ErrorResponse'
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/httputil.ErrorResponse'
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/httputil.ErrorResponse'
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/httputil.ErrorResponse'
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
       security:
       - BearerAuth: []
       summary: เรียกดูสูตรอาหารแบบรายรายการ
+      tags:
+      - recipes
+  /recipes/{id}/favorite:
+    delete:
+      description: ลบสูตรอาหารที่ระบุออกจากรายการโปรดของผู้ใช้ที่ล็อกอิน (soft delete)
+      parameters:
+      - description: Recipe ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: เอาสูตรอาหารออกจากรายการโปรด
+      tags:
+      - recipes
+    post:
+      description: เพิ่มสูตรอาหารที่ระบุเข้ารายการโปรดของผู้ใช้ที่ล็อกอิน กดซ้ำได้โดยไม่เกิด
+        error
+      parameters:
+      - description: Recipe ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: เพิ่มสูตรอาหารในรายการโปรด
+      tags:
+      - recipes
+  /recipes/{id}/rating:
+    post:
+      consumes:
+      - application/json
+      description: ให้คะแนนสูตรอาหารที่ระบุ (1-5) ให้ซ้ำได้ ค่าล่าสุดจะแทนที่ค่าเดิม
+        แล้วคำนวณ averageRating ใหม่ทันที
+      parameters:
+      - description: Recipe ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: คะแนน 1-5
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_recipe.RateRecipeRequest'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: ให้คะแนนสูตรอาหาร
       tags:
       - recipes
   /users/{id}:
@@ -428,19 +562,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/user.UserResponse'
+            $ref: '#/definitions/internal_user.UserResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/httputil.ErrorResponse'
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/httputil.ErrorResponse'
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/httputil.ErrorResponse'
+            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
       security:
       - BearerAuth: []
       summary: ดึงข้อมูลจาก user แบบรายคน

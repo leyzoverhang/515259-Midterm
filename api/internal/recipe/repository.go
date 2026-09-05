@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -86,7 +88,8 @@ func (repo *repository) FindByID(ctx context.Context, id int) (*Recipe, error) {
 	return &recipe, nil
 }
 
-func (repo *repository) List(ctx context.Context, query GetRecipesQuery) ([]Recipe, int64, error) {
+// List รับ userID เพิ่มเพื่อกรองรายการโปรด (query.Favorite) เฉพาะของผู้ใช้ที่ล็อกอิน
+func (repo *repository) List(ctx context.Context, userID uuid.UUID, query GetRecipesQuery) ([]Recipe, int64, error) {
 	db := repo.db.WithContext(ctx).Model(&Recipe{})
 
 	if query.Name != "" {
@@ -94,6 +97,16 @@ func (repo *repository) List(ctx context.Context, query GetRecipesQuery) ([]Reci
 	}
 	if query.Difficulty != "" {
 		db = db.Where("difficulty_id = ?", query.Difficulty)
+	}
+
+	// กับดัก T3: ใช้ Subquery เพื่อกรอง Favorite ไม่ใช่ JOIN
+	if query.Favorite != nil {
+		subQuery := repo.db.WithContext(ctx).Model(&UserFavorite{}).Select("recipe_id").Where("user_id = ?", userID)
+		if *query.Favorite {
+			db = db.Where("recipes.id IN (?)", subQuery)
+		} else {
+			db = db.Where("recipes.id NOT IN (?)", subQuery)
+		}
 	}
 
 	var total int64
@@ -113,7 +126,7 @@ func (repo *repository) List(ctx context.Context, query GetRecipesQuery) ([]Reci
 	db = db.Order(order)
 
 	// Pagination
-	db = db.Order((query.Page - 1) * query.Limit).Limit(query.Limit)
+	db = db.Offset((query.Page - 1) * query.Limit).Limit(query.Limit)
 
 	// Find
 	var recipes []Recipe
@@ -132,4 +145,113 @@ func (repo *repository) DifficultyExists(ctx context.Context, id string) (bool, 
 	}
 
 	return count > 0, nil
+}
+
+func (repo *repository) Favorite(ctx context.Context, userID uuid.UUID, recipeID int) error {
+	// กับดัก T1: ใช้ ON CONFLICT เพื่อคืนชีพแถวข้อมูล
+	return repo.db.WithContext(ctx).Clauses(clause.OnConflict{
+		Columns: []clause.Column{{Name: "user_id"}, {Name: "recipe_id"}},
+		DoUpdates: clause.Assignments(map[string]interface{}{
+			"deleted_at": nil,
+			"updated_at": time.Now(),
+		}),
+	}).Create(&UserFavorite{
+		UserID:   userID,
+		RecipeID: recipeID,
+	}).Error
+}
+
+func (repo *repository) Unfavorite(ctx context.Context, userID uuid.UUID, recipeID int) error {
+	// การลบแบบ Soft Delete อาศัย gorm.DeletedAt ใน Struct
+	return repo.db.WithContext(ctx).
+		Where("user_id = ? AND recipe_id = ?", userID, recipeID).
+		Delete(&UserFavorite{}).Error
+}
+
+func (repo *repository) Rate(ctx context.Context, userID uuid.UUID, recipeID int, score float64) error {
+	// กับดัก T4: ต้องทำทั้ง 3 ขั้นตอนใน Transaction เดียว
+	return repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+
+		// 1. บันทึกหรืออัปเดตคะแนนของ User คนนี้
+		err := tx.Clauses(clause.OnConflict{
+			Columns: []clause.Column{{Name: "user_id"}, {Name: "recipe_id"}},
+			DoUpdates: clause.Assignments(map[string]interface{}{
+				"score":      score,
+				"deleted_at": nil,
+				"updated_at": time.Now(),
+			}),
+		}).Create(&RecipeRating{
+			UserID:   userID,
+			RecipeID: recipeID,
+			Score:    score,
+		}).Error
+		if err != nil {
+			return err
+		}
+
+		// 2. คำนวณ Average Rating ใหม่ของสูตรนี้ (กับดัก T5: COALESCE)
+		var avgScore float64
+		err = tx.Model(&RecipeRating{}).
+			Select("COALESCE(AVG(score), 0)").
+			Where("recipe_id = ? AND deleted_at IS NULL", recipeID).
+			Scan(&avgScore).Error
+		if err != nil {
+			return err
+		}
+
+		// 3. นำค่า Average ที่คำนวณได้ไปอัปเดตลงในตาราง Recipes
+		return tx.Model(&Recipe{}).
+			Where("id = ?", recipeID).
+			Update("average_rating", avgScore).Error
+	})
+}
+
+func (repo *repository) FavoriteRecipeIDs(ctx context.Context, userID uuid.UUID, recipeIDs []int) (map[int]bool, error) {
+	result := make(map[int]bool, len(recipeIDs))
+	if len(recipeIDs) == 0 {
+		return result, nil
+	}
+
+	var favorited []int
+	if err := repo.db.WithContext(ctx).
+		Model(&UserFavorite{}).
+		Select("recipe_id").
+		Where("user_id = ? AND recipe_id IN ? AND deleted_at IS NULL", userID, recipeIDs).
+		Find(&favorited).Error; err != nil {
+		return nil, fmt.Errorf("favorite recipe ids: %w", err)
+	}
+
+	for _, id := range favorited {
+		result[id] = true
+	}
+
+	return result, nil
+}
+
+func (repo *repository) RatingCounts(ctx context.Context, recipeIDs []int) (map[int]int64, error) {
+	result := make(map[int]int64, len(recipeIDs))
+	if len(recipeIDs) == 0 {
+		return result, nil
+	}
+
+	type ratingCountRow struct {
+		RecipeID int
+		Total    int64
+	}
+
+	var rows []ratingCountRow
+	if err := repo.db.WithContext(ctx).
+		Model(&RecipeRating{}).
+		Select("recipe_id, COUNT(*) AS total").
+		Where("recipe_id IN ? AND deleted_at IS NULL", recipeIDs).
+		Group("recipe_id").
+		Find(&rows).Error; err != nil {
+		return nil, fmt.Errorf("rating counts: %w", err)
+	}
+
+	for _, row := range rows {
+		result[row.RecipeID] = row.Total
+	}
+
+	return result, nil
 }

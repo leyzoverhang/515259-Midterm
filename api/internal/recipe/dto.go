@@ -95,6 +95,7 @@ type GetRecipesQuery struct {
 	Name       string        `form:"name"`
 	Difficulty string        `form:"difficulty"`
 	Sort       SortDirection `form:"sort" binding:"omitempty,oneof=ASC DESC"`
+	Favorite   *bool         `form:"favorite"`
 }
 
 func (query *GetRecipesQuery) Ensure() {
@@ -128,6 +129,11 @@ type InstructionResponse struct {
 	Description string `json:"description"`
 }
 
+type RatingResponse struct {
+	Average float64 `json:"average"`
+	Total   int64   `json:"total"`
+}
+
 type RecipeResponse struct {
 	ID           int                   `json:"id"`
 	Name         string                `json:"name"`
@@ -138,11 +144,15 @@ type RecipeResponse struct {
 	Ingredients  []IngredientResponse  `json:"ingredients"`
 	Instructions []InstructionResponse `json:"instructions"`
 	Creator      CreatorResponse       `json:"creator"`
+	IsFavorite   bool                  `json:"isFavorite"` // true ถ้า user ที่ล็อกอินกดโปรดสูตรนี้ไว้
+	Rating       RatingResponse        `json:"rating"`
 	CreatedAt    time.Time             `json:"createdAt"`
 	UpdatedAt    time.Time             `json:"updatedAt"`
 }
 
-func NewRecipeResponse(recipe Recipe) RecipeResponse {
+func NewRecipeResponse(view RecipeView) RecipeResponse {
+	recipe := view.Recipe
+
 	ingredients := make([]IngredientResponse, 0, len(recipe.Ingredients))
 	for _, ingredient := range recipe.Ingredients {
 		ingredients = append(ingredients, IngredientResponse{
@@ -178,6 +188,13 @@ func NewRecipeResponse(recipe Recipe) RecipeResponse {
 			ID:   recipe.Creator.ID.String(),
 			Name: *recipe.Creator.Name,
 		},
+
+		// IsFavorite/RatingTotal มาจาก service.attachMeta (batch query แยกจาก List/FindByID)
+		IsFavorite: view.IsFavorite,
+		Rating: RatingResponse{
+			Average: recipe.AverageRating,
+			Total:   view.RatingTotal,
+		},
 		CreatedAt: recipe.CreatedAt,
 		UpdatedAt: recipe.UpdatedAt,
 	}
@@ -190,14 +207,18 @@ type ListResponse[T any] struct {
 
 type ListRecipesResponse ListResponse[RecipeResponse]
 
-func NewListRecipesResponse(recipes []Recipe, total int64) ListRecipesResponse {
-	results := make([]RecipeResponse, 0, len(recipes))
-	for _, recipe := range recipes {
-		results = append(results, NewRecipeResponse(recipe))
+func NewListRecipesResponse(views []RecipeView, total int64) ListRecipesResponse {
+	results := make([]RecipeResponse, 0, len(views))
+	for _, view := range views {
+		results = append(results, NewRecipeResponse(view))
 	}
 
 	return ListRecipesResponse{
 		Total:   total,
 		Results: results,
 	}
+}
+
+type RateRecipeRequest struct {
+	Score float64 `json:"rating" binding:"required,min=1,max=5"`
 }

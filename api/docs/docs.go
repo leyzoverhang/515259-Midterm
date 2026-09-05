@@ -48,19 +48,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/httputil.ErrorResponse"
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/httputil.ErrorResponse"
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
                         }
                     },
                     "502": {
                         "description": "Bad Gateway",
                         "schema": {
-                            "$ref": "#/definitions/httputil.ErrorResponse"
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
                         }
                     }
                 }
@@ -86,7 +86,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth.ExchangeRequest"
+                            "$ref": "#/definitions/internal_auth.ExchangeRequest"
                         }
                     }
                 ],
@@ -94,19 +94,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/auth.Credential"
+                            "$ref": "#/definitions/internal_auth.Credential"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/httputil.ErrorResponse"
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/httputil.ErrorResponse"
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
                         }
                     }
                 }
@@ -129,7 +129,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/httputil.ErrorResponse"
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
                         }
                     }
                 }
@@ -157,7 +157,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth.LogoutRequest"
+                            "$ref": "#/definitions/internal_auth.LogoutRequest"
                         }
                     }
                 ],
@@ -168,13 +168,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/httputil.ErrorResponse"
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
                         }
                     },
                     "502": {
                         "description": "Bad Gateway",
                         "schema": {
-                            "$ref": "#/definitions/httputil.ErrorResponse"
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
                         }
                     }
                 }
@@ -187,7 +187,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "ค้นหาสูตรอาหารทั้งหมด และสามารถกรองด้วย ชื่อ, ความยาก และเรียงตามเวลาที่สร้างได้",
+                "description": "ค้นหาสูตรอาหารทั้งหมด กรองด้วยชื่อ/ความยาก/รายการโปรด และเรียงตามเวลาที่สร้างได้",
                 "produces": [
                     "application/json"
                 ],
@@ -206,6 +206,12 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Id ของความยากในการทำ",
                         "name": "difficulty",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "กรองตามรายการโปรด: true = เฉพาะที่กดโปรด, false = เฉพาะที่ยังไม่กด, ไม่ส่ง = ทั้งหมด",
+                        "name": "favorite",
                         "in": "query"
                     },
                     {
@@ -241,31 +247,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/recipe.ListRecipesResponse"
+                            "$ref": "#/definitions/internal_recipe.ListRecipesResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/httputil.ErrorResponse"
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/httputil.ErrorResponse"
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/httputil.ErrorResponse"
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/httputil.ErrorResponse"
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
                         }
                     }
                 }
@@ -294,7 +300,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/recipe.CreateRecipeRequest"
+                            "$ref": "#/definitions/internal_recipe.CreateRecipeRequest"
                         }
                     }
                 ],
@@ -302,25 +308,25 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/recipe.CreateRecipeResponse"
+                            "$ref": "#/definitions/internal_recipe.CreateRecipeResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/httputil.ErrorResponse"
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/httputil.ErrorResponse"
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/httputil.ErrorResponse"
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
                         }
                     }
                 }
@@ -354,31 +360,197 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/recipe.RecipeResponse"
+                            "$ref": "#/definitions/internal_recipe.RecipeResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/httputil.ErrorResponse"
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/httputil.ErrorResponse"
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/httputil.ErrorResponse"
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/httputil.ErrorResponse"
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/recipes/{id}/favorite": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "เพิ่มสูตรอาหารที่ระบุเข้ารายการโปรดของผู้ใช้ที่ล็อกอิน กดซ้ำได้โดยไม่เกิด error",
+                "tags": [
+                    "recipes"
+                ],
+                "summary": "เพิ่มสูตรอาหารในรายการโปรด",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Recipe ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "ลบสูตรอาหารที่ระบุออกจากรายการโปรดของผู้ใช้ที่ล็อกอิน (soft delete)",
+                "tags": [
+                    "recipes"
+                ],
+                "summary": "เอาสูตรอาหารออกจากรายการโปรด",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Recipe ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/recipes/{id}/rating": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "ให้คะแนนสูตรอาหารที่ระบุ (1-5) ให้ซ้ำได้ ค่าล่าสุดจะแทนที่ค่าเดิม แล้วคำนวณ averageRating ใหม่ทันที",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "recipes"
+                ],
+                "summary": "ให้คะแนนสูตรอาหาร",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Recipe ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "คะแนน 1-5",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_recipe.RateRecipeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
                         }
                     }
                 }
@@ -412,25 +584,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/user.UserResponse"
+                            "$ref": "#/definitions/internal_user.UserResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/httputil.ErrorResponse"
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/httputil.ErrorResponse"
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/httputil.ErrorResponse"
+                            "$ref": "#/definitions/wongnok_internal_httputil.ErrorResponse"
                         }
                     }
                 }
@@ -438,7 +610,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "auth.Credential": {
+        "internal_auth.Credential": {
             "type": "object",
             "properties": {
                 "accessToken": {
@@ -455,7 +627,7 @@ const docTemplate = `{
                 }
             }
         },
-        "auth.ExchangeRequest": {
+        "internal_auth.ExchangeRequest": {
             "type": "object",
             "required": [
                 "ticket"
@@ -467,7 +639,7 @@ const docTemplate = `{
                 }
             }
         },
-        "auth.LogoutRequest": {
+        "internal_auth.LogoutRequest": {
             "type": "object",
             "required": [
                 "refreshToken"
@@ -479,18 +651,7 @@ const docTemplate = `{
                 }
             }
         },
-        "httputil.ErrorResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "string"
-                },
-                "message": {
-                    "type": "string"
-                }
-            }
-        },
-        "recipe.CreateRecipeRequest": {
+        "internal_recipe.CreateRecipeRequest": {
             "type": "object",
             "required": [
                 "description",
@@ -516,13 +677,13 @@ const docTemplate = `{
                 "ingredients": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/recipe.RecipeIngredientRequest"
+                        "$ref": "#/definitions/internal_recipe.RecipeIngredientRequest"
                     }
                 },
                 "instructions": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/recipe.RecipeInstructionRequest"
+                        "$ref": "#/definitions/internal_recipe.RecipeInstructionRequest"
                     }
                 },
                 "name": {
@@ -530,7 +691,7 @@ const docTemplate = `{
                 }
             }
         },
-        "recipe.CreateRecipeResponse": {
+        "internal_recipe.CreateRecipeResponse": {
             "type": "object",
             "properties": {
                 "id": {
@@ -538,7 +699,7 @@ const docTemplate = `{
                 }
             }
         },
-        "recipe.CreatorResponse": {
+        "internal_recipe.CreatorResponse": {
             "type": "object",
             "properties": {
                 "id": {
@@ -549,7 +710,7 @@ const docTemplate = `{
                 }
             }
         },
-        "recipe.DifficultyResponse": {
+        "internal_recipe.DifficultyResponse": {
             "type": "object",
             "properties": {
                 "id": {
@@ -560,7 +721,7 @@ const docTemplate = `{
                 }
             }
         },
-        "recipe.DurationResponse": {
+        "internal_recipe.DurationResponse": {
             "type": "object",
             "properties": {
                 "id": {
@@ -571,7 +732,7 @@ const docTemplate = `{
                 }
             }
         },
-        "recipe.IngredientResponse": {
+        "internal_recipe.IngredientResponse": {
             "type": "object",
             "properties": {
                 "description": {
@@ -582,7 +743,7 @@ const docTemplate = `{
                 }
             }
         },
-        "recipe.InstructionResponse": {
+        "internal_recipe.InstructionResponse": {
             "type": "object",
             "properties": {
                 "description": {
@@ -593,13 +754,13 @@ const docTemplate = `{
                 }
             }
         },
-        "recipe.ListRecipesResponse": {
+        "internal_recipe.ListRecipesResponse": {
             "type": "object",
             "properties": {
                 "results": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/recipe.RecipeResponse"
+                        "$ref": "#/definitions/internal_recipe.RecipeResponse"
                     }
                 },
                 "total": {
@@ -607,7 +768,31 @@ const docTemplate = `{
                 }
             }
         },
-        "recipe.RecipeIngredientRequest": {
+        "internal_recipe.RateRecipeRequest": {
+            "type": "object",
+            "required": [
+                "rating"
+            ],
+            "properties": {
+                "rating": {
+                    "type": "number",
+                    "maximum": 5,
+                    "minimum": 1
+                }
+            }
+        },
+        "internal_recipe.RatingResponse": {
+            "type": "object",
+            "properties": {
+                "average": {
+                    "type": "number"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_recipe.RecipeIngredientRequest": {
             "type": "object",
             "required": [
                 "description"
@@ -618,7 +803,7 @@ const docTemplate = `{
                 }
             }
         },
-        "recipe.RecipeInstructionRequest": {
+        "internal_recipe.RecipeInstructionRequest": {
             "type": "object",
             "required": [
                 "description"
@@ -629,23 +814,23 @@ const docTemplate = `{
                 }
             }
         },
-        "recipe.RecipeResponse": {
+        "internal_recipe.RecipeResponse": {
             "type": "object",
             "properties": {
                 "createdAt": {
                     "type": "string"
                 },
                 "creator": {
-                    "$ref": "#/definitions/recipe.CreatorResponse"
+                    "$ref": "#/definitions/internal_recipe.CreatorResponse"
                 },
                 "description": {
                     "type": "string"
                 },
                 "difficulty": {
-                    "$ref": "#/definitions/recipe.DifficultyResponse"
+                    "$ref": "#/definitions/internal_recipe.DifficultyResponse"
                 },
                 "duration": {
-                    "$ref": "#/definitions/recipe.DurationResponse"
+                    "$ref": "#/definitions/internal_recipe.DurationResponse"
                 },
                 "id": {
                     "type": "integer"
@@ -656,24 +841,31 @@ const docTemplate = `{
                 "ingredients": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/recipe.IngredientResponse"
+                        "$ref": "#/definitions/internal_recipe.IngredientResponse"
                     }
                 },
                 "instructions": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/recipe.InstructionResponse"
+                        "$ref": "#/definitions/internal_recipe.InstructionResponse"
                     }
+                },
+                "isFavorite": {
+                    "description": "true ถ้า user ที่ล็อกอินกดโปรดสูตรนี้ไว้",
+                    "type": "boolean"
                 },
                 "name": {
                     "type": "string"
+                },
+                "rating": {
+                    "$ref": "#/definitions/internal_recipe.RatingResponse"
                 },
                 "updatedAt": {
                     "type": "string"
                 }
             }
         },
-        "user.UserResponse": {
+        "internal_user.UserResponse": {
             "type": "object",
             "properties": {
                 "email": {
@@ -687,6 +879,17 @@ const docTemplate = `{
                 "name": {
                     "type": "string",
                     "example": "สมชาย ใจดี"
+                }
+            }
+        },
+        "wongnok_internal_httputil.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
                 }
             }
         }
