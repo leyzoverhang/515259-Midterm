@@ -1,6 +1,6 @@
 basePath: /api/v1
 definitions:
-  internal_auth.Credential:
+  auth.Credential:
     properties:
       accessToken:
         type: string
@@ -11,7 +11,7 @@ definitions:
       tokenType:
         type: string
     type: object
-  internal_auth.ExchangeRequest:
+  auth.ExchangeRequest:
     properties:
       ticket:
         example: pQx7...base64url...
@@ -19,7 +19,7 @@ definitions:
     required:
     - ticket
     type: object
-  internal_auth.LogoutRequest:
+  auth.LogoutRequest:
     properties:
       refreshToken:
         example: eyJhbGci...
@@ -27,7 +27,14 @@ definitions:
     required:
     - refreshToken
     type: object
-  internal_recipe.CreateRecipeRequest:
+  httputil.ErrorResponse:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
+  recipe.CreateRecipeRequest:
     properties:
       description:
         type: string
@@ -39,11 +46,11 @@ definitions:
         type: string
       ingredients:
         items:
-          $ref: '#/definitions/internal_recipe.RecipeIngredientRequest'
+          $ref: '#/definitions/recipe.RecipeIngredientRequest'
         type: array
       instructions:
         items:
-          $ref: '#/definitions/internal_recipe.RecipeInstructionRequest'
+          $ref: '#/definitions/recipe.RecipeInstructionRequest'
         type: array
       name:
         type: string
@@ -55,56 +62,56 @@ definitions:
     - instructions
     - name
     type: object
-  internal_recipe.CreateRecipeResponse:
+  recipe.CreateRecipeResponse:
     properties:
       id:
         type: integer
     type: object
-  internal_recipe.CreatorResponse:
+  recipe.CreatorResponse:
     properties:
       id:
         type: string
       name:
         type: string
     type: object
-  internal_recipe.DifficultyResponse:
+  recipe.DifficultyResponse:
     properties:
       id:
         type: string
       name:
         type: string
     type: object
-  internal_recipe.DurationResponse:
+  recipe.DurationResponse:
     properties:
       id:
         type: string
       name:
         type: string
     type: object
-  internal_recipe.IngredientResponse:
+  recipe.IngredientResponse:
     properties:
       description:
         type: string
       id:
         type: integer
     type: object
-  internal_recipe.InstructionResponse:
+  recipe.InstructionResponse:
     properties:
       description:
         type: string
       id:
         type: integer
     type: object
-  internal_recipe.ListRecipesResponse:
+  recipe.ListRecipesResponse:
     properties:
       results:
         items:
-          $ref: '#/definitions/internal_recipe.RecipeResponse'
+          $ref: '#/definitions/recipe.RecipeResponse'
         type: array
       total:
         type: integer
     type: object
-  internal_recipe.RateRecipeRequest:
+  recipe.RateRecipeRequest:
     properties:
       rating:
         maximum: 5
@@ -113,28 +120,28 @@ definitions:
     required:
     - rating
     type: object
-  internal_recipe.RatingResponse:
+  recipe.RatingResponse:
     properties:
       average:
         type: number
       total:
         type: integer
     type: object
-  internal_recipe.RecipeIngredientRequest:
+  recipe.RecipeIngredientRequest:
     properties:
       description:
         type: string
     required:
     - description
     type: object
-  internal_recipe.RecipeInstructionRequest:
+  recipe.RecipeInstructionRequest:
     properties:
       description:
         type: string
     required:
     - description
     type: object
-  internal_recipe.RecipeResponse:
+  recipe.RecipeResponse:
     properties:
       averageRating:
         description: |-
@@ -145,24 +152,24 @@ definitions:
       createdAt:
         type: string
       creator:
-        $ref: '#/definitions/internal_recipe.CreatorResponse'
+        $ref: '#/definitions/recipe.CreatorResponse'
       description:
         type: string
       difficulty:
-        $ref: '#/definitions/internal_recipe.DifficultyResponse'
+        $ref: '#/definitions/recipe.DifficultyResponse'
       duration:
-        $ref: '#/definitions/internal_recipe.DurationResponse'
+        $ref: '#/definitions/recipe.DurationResponse'
       id:
         type: integer
       imageUrl:
         type: string
       ingredients:
         items:
-          $ref: '#/definitions/internal_recipe.IngredientResponse'
+          $ref: '#/definitions/recipe.IngredientResponse'
         type: array
       instructions:
         items:
-          $ref: '#/definitions/internal_recipe.InstructionResponse'
+          $ref: '#/definitions/recipe.InstructionResponse'
         type: array
       isFavorite:
         description: true ถ้า user ที่ล็อกอินกดโปรดสูตรนี้ไว้
@@ -170,11 +177,11 @@ definitions:
       name:
         type: string
       rating:
-        $ref: '#/definitions/internal_recipe.RatingResponse'
+        $ref: '#/definitions/recipe.RatingResponse'
       updatedAt:
         type: string
     type: object
-  internal_user.UserResponse:
+  user.UserResponse:
     properties:
       email:
         example: somchai@pea.co.th
@@ -184,13 +191,6 @@ definitions:
         type: string
       name:
         example: สมชาย ใจดี
-        type: string
-    type: object
-  wongnok_internal_httputil.ErrorResponse:
-    properties:
-      code:
-        type: string
-      message:
         type: string
     type: object
 host: localhost:8080
@@ -222,15 +222,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
         "502":
           description: Bad Gateway
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
       summary: รับ callback จาก Keycloak
       tags:
       - auth
@@ -245,22 +245,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_auth.ExchangeRequest'
+          $ref: '#/definitions/auth.ExchangeRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_auth.Credential'
+            $ref: '#/definitions/auth.Credential'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
       summary: แลก ticket เป็น credential จริง
       tags:
       - auth
@@ -275,7 +275,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
       summary: เริ่ม login ผ่าน Keycloak
       tags:
       - auth
@@ -290,18 +290,18 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_auth.LogoutRequest'
+          $ref: '#/definitions/auth.LogoutRequest'
       responses:
         "204":
           description: Logout สำเร็จ
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
         "502":
           description: Bad Gateway
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
       security:
       - BearerAuth: []
       summary: ออกจากระบบ
@@ -351,23 +351,23 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_recipe.ListRecipesResponse'
+            $ref: '#/definitions/recipe.ListRecipesResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
       security:
       - BearerAuth: []
       summary: เรียกดูสูตรอาหารทั้งหมด
@@ -383,32 +383,65 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_recipe.CreateRecipeRequest'
+          $ref: '#/definitions/recipe.CreateRecipeRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/internal_recipe.CreateRecipeResponse'
+            $ref: '#/definitions/recipe.CreateRecipeResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
       security:
       - BearerAuth: []
       summary: สร้างสูตรอาหาร
       tags:
       - recipes
   /recipes/{id}:
+    delete:
+      description: ลบสูตรอาหารที่ระบุ (soft delete) — เพิ่มไว้ให้ครบตามตัวอย่างของอาจารย์
+        ไม่ได้อยู่ในขอบเขตที่ต้องอธิบายตอนสอบ
+      parameters:
+      - description: Recipe ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httputil.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httputil.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/httputil.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httputil.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: ลบสูตรอาหาร
+      tags:
+      - recipes
     get:
       description: ค้นหาสูตรอาหารจาก id แล้วคืนข้อมูลสูตรอาหารที่เจอกลับมา
       parameters:
@@ -423,23 +456,23 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_recipe.RecipeResponse'
+            $ref: '#/definitions/recipe.RecipeResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
       security:
       - BearerAuth: []
       summary: เรียกดูสูตรอาหารแบบรายรายการ
@@ -460,19 +493,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
       security:
       - BearerAuth: []
       summary: เอาสูตรอาหารออกจากรายการโปรด
@@ -493,19 +526,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
       security:
       - BearerAuth: []
       summary: เพิ่มสูตรอาหารในรายการโปรด
@@ -528,26 +561,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_recipe.RateRecipeRequest'
+          $ref: '#/definitions/recipe.RateRecipeRequest'
       responses:
         "204":
           description: No Content
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
       security:
       - BearerAuth: []
       summary: ให้คะแนนสูตรอาหาร
@@ -568,19 +601,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_user.UserResponse'
+            $ref: '#/definitions/user.UserResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/wongnok_internal_httputil.ErrorResponse'
+            $ref: '#/definitions/httputil.ErrorResponse'
       security:
       - BearerAuth: []
       summary: ดึงข้อมูลจาก user แบบรายคน

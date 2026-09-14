@@ -17,6 +17,8 @@ type Repository interface {
 	Favorite(ctx context.Context, userID uuid.UUID, recipeID int) error
 	Unfavorite(ctx context.Context, userID uuid.UUID, recipeID int) error
 	Rate(ctx context.Context, userID uuid.UUID, recipeID int, score float64) error
+	// Delete คือ Soft Delete (gorm.DeletedAt) — ลบสูตรอาหารตาม id
+	Delete(ctx context.Context, id int) error
 	// FavoriteRecipeIDs/RatingCounts คำนวณ isFavorite / rating.total แบบ batch
 	// (คนละ concern กับ List/FindByID เพื่อไม่ให้ query หลักพ่วงข้อมูลที่ขึ้นกับผู้เรียก)
 	FavoriteRecipeIDs(ctx context.Context, userID uuid.UUID, recipeIDs []int) (map[int]bool, error)
@@ -158,4 +160,12 @@ func (svc *service) Rate(ctx context.Context, userID uuid.UUID, recipeID int, sc
 		return err
 	}
 	return svc.repository.Rate(ctx, userID, recipeID, score)
+}
+
+// Delete ลบสูตรอาหาร โดยเช็คก่อนว่ามีอยู่จริง (ให้ handler แปลง ErrRecipeNotFound เป็น 404 ได้)
+func (svc *service) Delete(ctx context.Context, id int) error {
+	if _, err := svc.FindByID(ctx, id); err != nil {
+		return err
+	}
+	return svc.repository.Delete(ctx, id)
 }

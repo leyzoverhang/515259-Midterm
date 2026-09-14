@@ -21,6 +21,7 @@ type Service interface {
 	Favorite(ctx context.Context, userID uuid.UUID, recipeID int) error
 	Unfavorite(ctx context.Context, userID uuid.UUID, recipeID int) error
 	Rate(ctx context.Context, userID uuid.UUID, recipeID int, score float64) error
+	Delete(ctx context.Context, id int) error
 }
 
 type handler struct {
@@ -276,6 +277,44 @@ func (hdr *handler) Rate(ctx *gin.Context) {
 	}
 
 	if err := hdr.service.Rate(ctx.Request.Context(), userID, recipeID, req.Score); err != nil {
+		if errors.Is(err, ErrRecipeNotFound) {
+			ctx.AbortWithStatusJSON(http.StatusNotFound, httputil.ErrorResponse{Message: "recipe not found"})
+			return
+		}
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, httputil.ErrorResponse{Message: "internal server error"})
+		return
+	}
+
+	ctx.Status(http.StatusNoContent)
+}
+
+// Delete godoc
+//
+//	@Summary		ลบสูตรอาหาร
+//	@Description	ลบสูตรอาหารที่ระบุ (soft delete) — เพิ่มไว้ให้ครบตามตัวอย่างของอาจารย์ ไม่ได้อยู่ในขอบเขตที่ต้องอธิบายตอนสอบ
+//	@Tags			recipes
+//	@Security		BearerAuth
+//	@Param			id	path	int	true	"Recipe ID"
+//	@Success		204
+//	@Failure		400	{object}	httputil.ErrorResponse
+//	@Failure		401	{object}	httputil.ErrorResponse
+//	@Failure		404	{object}	httputil.ErrorResponse
+//	@Failure		500	{object}	httputil.ErrorResponse
+//	@Router			/recipes/{id} [delete]
+func (hdr *handler) Delete(ctx *gin.Context) {
+	_, ok := reqctx.UserID(ctx.Request.Context())
+	if !ok {
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, httputil.ErrorResponse{Message: "unauthorized"})
+		return
+	}
+
+	id, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, httputil.ErrorResponse{Message: "invalid recipe id"})
+		return
+	}
+
+	if err := hdr.service.Delete(ctx.Request.Context(), id); err != nil {
 		if errors.Is(err, ErrRecipeNotFound) {
 			ctx.AbortWithStatusJSON(http.StatusNotFound, httputil.ErrorResponse{Message: "recipe not found"})
 			return

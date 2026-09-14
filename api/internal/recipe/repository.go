@@ -206,6 +206,11 @@ func (repo *repository) Rate(ctx context.Context, userID uuid.UUID, recipeID int
 	})
 }
 
+// Delete ลบสูตรอาหารแบบ Soft Delete (gorm.DeletedAt) — ไม่ลบแถวจริงออกจาก DB
+func (repo *repository) Delete(ctx context.Context, id int) error {
+	return repo.db.WithContext(ctx).Delete(&Recipe{}, id).Error
+}
+
 func (repo *repository) FavoriteRecipeIDs(ctx context.Context, userID uuid.UUID, recipeIDs []int) (map[int]bool, error) {
 	result := make(map[int]bool, len(recipeIDs))
 	if len(recipeIDs) == 0 {

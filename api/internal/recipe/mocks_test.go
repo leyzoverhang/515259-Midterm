@@ -73,6 +73,11 @@ func (m *MockRepository) Rate(ctx context.Context, userID uuid.UUID, recipeID in
 	return args.Error(0)
 }
 
+func (m *MockRepository) Delete(ctx context.Context, id int) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
 func (m *MockRepository) FavoriteRecipeIDs(ctx context.Context, userID uuid.UUID, recipeIDs []int) (map[int]bool, error) {
 	args := m.Called(ctx, userID, recipeIDs)
 
@@ -156,5 +161,10 @@ func (m *MockService) Unfavorite(ctx context.Context, userID uuid.UUID, recipeID
 
 func (m *MockService) Rate(ctx context.Context, userID uuid.UUID, recipeID int, score float64) error {
 	args := m.Called(ctx, userID, recipeID, score)
+	return args.Error(0)
+}
+
+func (m *MockService) Delete(ctx context.Context, id int) error {
+	args := m.Called(ctx, id)
 	return args.Error(0)
 }

@@ -139,6 +139,7 @@ func run() error {
 	recipeGroup.POST("/:id/favorite", recipeHandler.Favorite)
 	recipeGroup.DELETE("/:id/favorite", recipeHandler.Unfavorite)
 	recipeGroup.POST("/:id/rating", recipeHandler.Rate)
+	recipeGroup.DELETE("/:id", recipeHandler.Delete)
 
 	// Register swagger
 	router.GET("swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
